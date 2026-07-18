@@ -1,0 +1,10 @@
+C:\StickQuestMod\bin\Release\net6.0\MissionImpossible.deps.json
+C:\StickQuestMod\bin\Release\net6.0\MissionImpossible.dll
+C:\StickQuestMod\obj\Release\net6.0\QuestMod.csproj.AssemblyReference.cache
+C:\StickQuestMod\obj\Release\net6.0\QuestMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\StickQuestMod\obj\Release\net6.0\QuestMod.AssemblyInfoInputs.cache
+C:\StickQuestMod\obj\Release\net6.0\QuestMod.AssemblyInfo.cs
+C:\StickQuestMod\obj\Release\net6.0\QuestMod.csproj.CoreCompileInputs.cache
+C:\StickQuestMod\obj\Release\net6.0\MissionImpossible.dll
+C:\StickQuestMod\obj\Release\net6.0\refint\MissionImpossible.dll
+C:\StickQuestMod\obj\Release\net6.0\ref\MissionImpossible.dll

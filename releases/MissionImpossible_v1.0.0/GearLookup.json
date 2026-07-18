@@ -1,0 +1,1058 @@
+{
+  "_info": {
+    "description": "Quest System Configuration for Mission Impossible Mod",
+    "difficulty_modifiers": {
+      "Easy (Pilgrim)": {
+        "required_multiplier": "0.5x",
+        "reward_multiplier": "1.0x",
+        "example": "If daily quest requires 4 sticks, easy mode requires 2 sticks."
+      },
+      "Normal (Stalker/Voyager)": {
+        "required_multiplier": "1.0x",
+        "reward_multiplier": "1.0x",
+        "example": "No modification - amounts are exactly as specified."
+      },
+      "Hard (Interloper/Misery)": {
+        "required_multiplier": "2.0x",
+        "reward_multiplier": "1.0x",
+        "example": "If daily quest requires 4 sticks, hard mode requires 8 sticks."
+      }
+    },
+    "quest_types_and_amounts": {
+      "daily": {
+        "required_amount": 4,
+        "reward_amount": 4,
+        "description": "Small daily tasks, regenerate every in-game day at 9 AM"
+      },
+      "weekly": {
+        "required_amount": 8,
+        "reward_amount": 8,
+        "description": "Medium weekly tasks, regenerate every 7 in-game days"
+      },
+      "monthly": {
+        "required_amount": 16,
+        "reward_amount": 16,
+        "description": "Large monthly tasks, regenerate every 30 in-game days"
+      }
+    },
+    "how_to_customize": {
+      "enable_disable_items": "Set enabled to true/false for each variant",
+      "disable_quest_type": "Delete the daily/weekly/monthly entry to disable that type for an item",
+      "example_monthly_only": "Keep only the monthly variant entry, delete daily and weekly"
+    }
+  },
+  "items_to_collect": {
+    "Accelerant": [
+      {"category":"Resources","spawn_name":"GEAR_Accelerant","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Accelerant","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Accelerant","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "AccelerantKerosene": [
+      {"category":"Resources","spawn_name":"GEAR_AccelerantKerosene","required":1,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_AccelerantKerosene","required":2,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_AccelerantKerosene","required":4,"quest_type":"monthly","enabled":false}
+    ],
+    "Acorn": [
+      {"category":"Resources","spawn_name":"GEAR_Acorn","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Acorn","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Acorn","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "Antibiotics": [
+      {"category":"Resources","spawn_name":"GEAR_BottleAntibiotics","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottleAntibiotics","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottleAntibiotics","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Antiseptic": [
+      {"category":"Resources","spawn_name":"GEAR_BottleHydrogenPeroxide","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottleHydrogenPeroxide","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottleHydrogenPeroxide","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Bandage": [
+      {"category":"Resources","spawn_name":"GEAR_HeavyBandage","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_HeavyBandage","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_HeavyBandage","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "BarkTinder": [
+      {"category":"Resources","spawn_name":"GEAR_BarkTinder","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BarkTinder","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BarkTinder","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "BearHide": [
+      {"category":"Resources","spawn_name":"GEAR_BearHide","required":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BearHideDried": [
+      {"category":"Resources","spawn_name":"GEAR_BearHideDried","required":4,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_BearHideDried","required":8,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_BearHideDried","required":16,"quest_type":"monthly","enabled":false}
+    ],
+    "BirchSapling": [
+      {"category":"Resources","spawn_name":"GEAR_BirchSapling","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BirchSapling","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Charcoal": [
+      {"category":"Resources","spawn_name":"GEAR_Charcoal","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Charcoal","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Charcoal","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "Cloth": [
+      {"category":"Resources","spawn_name":"GEAR_Cloth","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Cloth","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Cloth","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "Coal": [
+      {"category":"Resources","spawn_name":"GEAR_Coal","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Coal","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Coal","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "DustingSulfur": [
+      {"category":"Resources","spawn_name":"GEAR_DustingSulfur","required":4,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_DustingSulfur","required":8,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_DustingSulfur","required":16,"quest_type":"monthly","enabled":false}
+    ],
+    "Firelog": [
+      {"category":"Resources","spawn_name":"GEAR_Firelog","required":1,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_Firelog","required":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Gut": [
+      {"category":"Resources","spawn_name":"GEAR_Gut","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Gut","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Gut","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "GutDried": [
+      {"category":"Resources","spawn_name":"GEAR_GutDried","required":4,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_GutDried","required":8,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_GutDried","required":16,"quest_type":"monthly","enabled":false}
+    ],
+    "Hardwood": [
+      {"category":"Resources","spawn_name":"GEAR_Hardwood","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Hardwood","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Hardwood","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "LeatherHide": [
+      {"category":"Resources","spawn_name":"GEAR_LeatherHide","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_LeatherHide","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_LeatherHide","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "LeatherHideDried": [
+      {"category":"Resources","spawn_name":"GEAR_LeatherHideDried","required":1,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_LeatherHideDried","required":2,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_LeatherHideDried","required":4,"quest_type":"monthly","enabled":false}
+    ],
+    "MapleSapling": [
+      {"category":"Resources","spawn_name":"GEAR_MapleSapling","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_MapleSapling","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_MapleSapling","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "MooseHide": [
+      {"category":"Resources","spawn_name":"GEAR_MooseHide","required":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MooseHideDried": [
+      {"category":"Resources","spawn_name":"GEAR_MooseHideDried","required":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Newsprint": [
+      {"category":"Resources","spawn_name":"GEAR_Newsprint","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Newsprint","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Newsprint","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "OldMansBeardDressing": [
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardDressing","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardDressing","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardDressing","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "OldMansBeardHarvested": [
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardHarvested","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardHarvested","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_OldMansBeardHarvested","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "PainkillersBottle": [
+      {"category":"Resources","spawn_name":"GEAR_BottlePainKillers","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottlePainKillers","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_BottlePainKillers","required":6,"quest_type":"monthly","enabled":true}
+    ],
+    "RabbitPelt": [
+      {"category":"Resources","spawn_name":"GEAR_RabbitPelt","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_RabbitPelt","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_RabbitPelt","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "RabbitPeltDried": [
+      {"category":"Resources","spawn_name":"GEAR_RabbitPeltDried","required":4,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_RabbitPeltDried","required":8,"quest_type":"monthly","enabled":false}
+    ],
+    "ReclaimedWood": [
+      {"category":"Resources","spawn_name":"GEAR_ReclaimedWoodB","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ReclaimedWoodB","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ReclaimedWoodB","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "Reishi": [
+      {"category":"Resources","spawn_name":"GEAR_ReishiMushroom","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ReishiMushroom","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ReishiMushroom","required":6,"quest_type":"monthly","enabled":true}
+    ],
+    "RoseHip": [
+      {"category":"Resources","spawn_name":"GEAR_RoseHip","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_RoseHip","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_RoseHip","required":6,"quest_type":"monthly","enabled":true}
+    ],
+    "ScrapLead": [
+      {"category":"Resources","spawn_name":"GEAR_ScrapLead","required":2,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_ScrapLead","required":4,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_ScrapLead","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "ScrapMetal": [
+      {"category":"Resources","spawn_name":"GEAR_ScrapMetal","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ScrapMetal","required":8,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_ScrapMetal","required":16,"quest_type":"monthly","enabled":true}
+    ],
+    "Softwood": [
+      {"category":"Resources","spawn_name":"GEAR_Softwood","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Softwood","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Softwood","required":8,"quest_type":"monthly","enabled":true}
+    ],
+    "Stick": [
+      {"category":"Resources","spawn_name":"GEAR_Stick","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Stick","required":16,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Stick","required":32,"quest_type":"monthly","enabled":true}
+    ],
+    "Stone": [
+      {"category":"Resources","spawn_name":"GEAR_Stone","required":4,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Stone","required":16,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Stone","required":32,"quest_type":"monthly","enabled":true}
+    ],
+    "Tinder": [
+      {"category":"Resources","spawn_name":"GEAR_Tinder","required":2,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Tinder","required":4,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_Tinder","required":6,"quest_type":"monthly","enabled":true}
+    ],
+    "WolfPelt": [
+      {"category":"Resources","spawn_name":"GEAR_WolfPelt","required":1,"quest_type":"daily","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_WolfPelt","required":2,"quest_type":"weekly","enabled":true},
+      {"category":"Resources","spawn_name":"GEAR_WolfPelt","required":4,"quest_type":"monthly","enabled":true}
+    ],
+    "WolfPeltDried": [
+      {"category":"Resources","spawn_name":"GEAR_WolfPeltDried","required":4,"quest_type":"daily","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_WolfPeltDried","required":8,"quest_type":"weekly","enabled":false},
+      {"category":"Resources","spawn_name":"GEAR_WolfPeltDried","required":16,"quest_type":"monthly","enabled":false}
+    ]
+  },
+  "items_as_reward": {
+    "Balaclava": [
+      {"category":"Clothing","spawn_name":"GEAR_Balaclava","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_Balaclava","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BaseballCap": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BaseballCap","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BaseballCap","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BasicGloves": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BasicGloves","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BasicGloves","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BasicShoes": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BasicShoes","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BasicShoes","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BasicBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BasicBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BasicBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BasicWinterCoat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BasicWinterCoat","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BasicWinterCoat","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "BearSkinCoat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BearSkinCoat","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_BearSkinCoat","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "CargoPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CargoPants","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CargoPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CombatBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CombatBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CombatBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CombatPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CombatPants","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CombatPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CottonScarf": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CottonScarf","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CottonScarf","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CottonShirt": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CottonShirt","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CottonShirt","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CottonHoodie": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_CottonHoodie","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CottonHoodie","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CowichanSweater": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_CowichanSweater","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_CowichanSweater","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Crampons": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_Crampons","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_Crampons","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "DeerSkinBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DeerSkinBoots","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_DeerSkinBoots","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "DeerSkinPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DeerSkinPants","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_DeerSkinPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "DownParka": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DownParka","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_DownParka","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "DownSkiJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DownSkiJacket","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_DownSkiJacket","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "DownVest": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DownVest","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_DownVest","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "EarMuffs": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_EarMuffs","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_EarMuffs","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "FleeceMittens": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_FleeceMittens","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_FleeceMittens","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "FleeceSweater": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_FleeceSweater","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_FleeceSweater","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "FlightJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_JacketLeatherFlightA","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_JacketLeatherFlightA","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Gauntlets": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_Gauntlets","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_Gauntlets","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "HeavyParka": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_HeavyParka","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_HeavyParka","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "HeavyWoolSweater": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_HeavyWoolSweater","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_HeavyWoolSweater","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "HockeyJersey": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_JerseyHockeyA","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_JerseyHockeyA","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "ImprovisedHat": [
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedHat","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedHat","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedHat","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "ImprovisedMittens": [
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedMittens","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedMittens","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_ImprovisedMittens","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "InsulatedBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "InsulatedPants": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedPants","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "InsulatedVest": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedVest","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_InsulatedVest","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Jeans": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_Jeans","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_Jeans","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "LeatherShoes": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_LeatherShoes","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_LeatherShoes","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "LightParka": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_LightParka","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_LightParka","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "LongUnderwear": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_LongUnderwear","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_LongUnderwear","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "LongUnderwearWool": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_LongUnderwearWool","reward_amount":8,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_LongUnderwearWool","reward_amount":16,"quest_type":"monthly","enabled":false}
+    ],
+    "MackinawJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MackinawJacket","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MackinawJacket","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MilitaryParka": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MilitaryParka","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MilitaryParka","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MinersBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MinersBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MinersBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MinersPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MinersPants","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MinersPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MinersJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MinersJacket","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MinersJacket","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Mittens": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_Mittens","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_Mittens","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "MooseHideCloak": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MooseHideCloak","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_MooseHideCloak","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "MuklukBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_MuklukBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_MuklukBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "PlaidShirt": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_PlaidShirt","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_PlaidShirt","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "PremiumWinterCoat": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_PremiumWinterCoat","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_PremiumWinterCoat","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "QualityWinterCoat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_QualityWinterCoat","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_QualityWinterCoat","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "RabbitskinHat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_RabbitskinHat","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_RabbitskinHat","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "RabbitSkinMittens": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_RabbitSkinMittens","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_RabbitSkinMittens","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "SkiBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_SkiBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_SkiBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "SkiGloves": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_SkiGloves","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_SkiGloves","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "SkiJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_DownSkiJacket","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_DownSkiJacket","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "TacticalGloves": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_TacticalGloves","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_TacticalGloves","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "TacticalJacket": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_TacticalJacket","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_TacticalJacket","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "TechnicalBackpack": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_TechnicalBackpack","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_TechnicalBackpack","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "TeeShirt": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_TeeShirt","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_TeeShirt","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Toque": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_Toque","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_Toque","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "TrailBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_BasicBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_BasicBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WoolSocks": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WoolSocks","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WoolSocks","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WoolSweater": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WoolSweater","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WoolSweater","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WoolShirt": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WoolShirt","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WoolShirt","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WorkBoots": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WorkBoots","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WorkBoots","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WorkGloves": [
+     
+      {"category":"Clothing","spawn_name":"GEAR_WorkGloves","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WorkGloves","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WorkPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WorkPants","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Clothing","spawn_name":"GEAR_WorkPants","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "WolfSkinHat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinHat","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinHat","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "WolfSkinCoat": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinCape","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinCape","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "WolfSkinPants": [
+      
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinPant","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Clothing","spawn_name":"GEAR_WolfSkinPant","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "AcornCoffeeCup": [
+      {"category":"Food","spawn_name":"GEAR_AcornCoffeeCup","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_AcornCoffeeCup","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_AcornCoffeeCup","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "BeefJerky": [
+      {"category":"Food","spawn_name":"GEAR_BeefJerky","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_BeefJerky","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_BeefJerky","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "BirchbarkTea": [
+      {"category":"Food","spawn_name":"GEAR_BirchbarkTea","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_BirchbarkTea","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_BirchbarkTea","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Broth": [
+      {"category":"Food","spawn_name":"GEAR_Broth","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Broth","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Broth","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CandyBar": [
+      {"category":"Food","spawn_name":"GEAR_CandyBar","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CandyBar","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CandyBar","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CannedBeans": [
+      {"category":"Food","spawn_name":"GEAR_CannedBeans","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedBeans","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedBeans","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CannedCorn": [
+      {"category":"Food","spawn_name":"GEAR_CannedCorn","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedCorn","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedCorn","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CannedHam": [
+      {"category":"Food","spawn_name":"GEAR_CannedHam","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedHam","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedHam","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CannedSardines": [
+      {"category":"Food","spawn_name":"GEAR_CannedSardines","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedSardines","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CannedSardines","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Carrot": [
+      {"category":"Food","spawn_name":"GEAR_Carrot","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Carrot","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Carrot","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CoffeeCup": [
+      {"category":"Food","spawn_name":"GEAR_CoffeeCup","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CoffeeCup","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CoffeeCup","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CoffeeTin": [
+      {"category":"Food","spawn_name":"GEAR_CoffeeTin","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CoffeeTin","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CoffeeTin","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CondensedMilk": [
+      {"category":"Food","spawn_name":"GEAR_CondensedMilk","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CondensedMilk","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CondensedMilk","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatBear": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatBear","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatBear","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatBear","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatDeer": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatDeer","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatDeer","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatDeer","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatMoose": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatMoose","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatMoose","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatMoose","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatPtarmigan": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatPtarmigan","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatPtarmigan","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatPtarmigan","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatRabbit": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatRabbit","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatRabbit","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatRabbit","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "CookedMeatWolf": [
+      {"category":"Food","spawn_name":"GEAR_CookedMeatWolf","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatWolf","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_CookedMeatWolf","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "EnergyBar": [
+      {"category":"Food","spawn_name":"GEAR_EnergyBar","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_EnergyBar","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_EnergyBar","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "EnergyDrink": [
+      {"category":"Food","spawn_name":"GEAR_SodaEnergy","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaEnergy","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaEnergy","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "GranolaBar": [
+      {"category":"Food","spawn_name":"GEAR_GranolaBar","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_GranolaBar","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_GranolaBar","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "KetchupChips": [
+      {"category":"Food","spawn_name":"GEAR_KetchupChips","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_KetchupChips","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_KetchupChips","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "MapleSyrup": [
+      {"category":"Food","spawn_name":"GEAR_MapleSyrup","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_MapleSyrup","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_MapleSyrup","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "MRE": [
+      {"category":"Food","spawn_name":"GEAR_MRE","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_MRE","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_MRE","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "OrangeSoda": [
+      {"category":"Food","spawn_name":"GEAR_SodaOrange","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaOrange","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaOrange","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "PeanutButter": [
+      {"category":"Food","spawn_name":"GEAR_PeanutButter","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_PeanutButter","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_PeanutButter","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "PinnacleCanPeaches": [
+      {"category":"Food","spawn_name":"GEAR_PinnacleCanPeaches","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_PinnacleCanPeaches","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_PinnacleCanPeaches","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Potato": [
+      {"category":"Food","spawn_name":"GEAR_Potato","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Potato","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Potato","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatBear": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatBear","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatBear","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatBear","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatDeer": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatDeer","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatDeer","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatDeer","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatMoose": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatMoose","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatMoose","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatMoose","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatPtarmigan": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatPtarmigan","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatPtarmigan","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatPtarmigan","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatRabbit": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatRabbit","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatRabbit","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatRabbit","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RawMeatWolf": [
+      {"category":"Food","spawn_name":"GEAR_RawMeatWolf","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatWolf","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RawMeatWolf","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "ReishiTea": [
+      {"category":"Food","spawn_name":"GEAR_ReishiTea","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_ReishiTea","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_ReishiTea","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RoseHipTea": [
+      {"category":"Food","spawn_name":"GEAR_RoseHipTea","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RoseHipTea","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_RoseHipTea","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Salt": [
+      {"category":"Food","spawn_name":"GEAR_Salt","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Salt","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Salt","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Soda": [
+      {"category":"Food","spawn_name":"GEAR_Soda","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Soda","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Soda","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "SodaGrape": [
+      {"category":"Food","spawn_name":"GEAR_SodaGrape","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaGrape","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_SodaGrape","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "TomatoSoupCan": [
+      {"category":"Food","spawn_name":"GEAR_TomatoSoupCan","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_TomatoSoupCan","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_TomatoSoupCan","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Water500ml": [
+      {"category":"Food","spawn_name":"GEAR_Water500ml","reward_amount":1,"quest_type":"daily","enabled":false},
+      {"category":"Food","spawn_name":"GEAR_Water500ml","reward_amount":2,"quest_type":"weekly","enabled":false},
+      {"category":"Food","spawn_name":"GEAR_Water500ml","reward_amount":4,"quest_type":"monthly","enabled":false}
+    ],
+    "Water1000ml": [
+      {"category":"Food","spawn_name":"GEAR_Water1000ml","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Water1000ml","reward_amount":7,"quest_type":"weekly","enabled":true},
+      {"category":"Food","spawn_name":"GEAR_Water1000ml","reward_amount":14,"quest_type":"monthly","enabled":true}
+    ],
+    "Arrow": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Arrow","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Arrow","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "ArrowHardened": [
+     
+      {"category":"Tools","spawn_name":"GEAR_ArrowHardened","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_ArrowHardened","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "ArrowManufactured": [
+      
+      {"category":"Tools","spawn_name":"GEAR_ArrowManufactured","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_ArrowManufactured","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Axe": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Hatchet","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Hatchet","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "AxeImprovised": [
+      
+      {"category":"Tools","spawn_name":"GEAR_HatchetImprovised","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_HatchetImprovised","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Bedroll": [
+      
+      {"category":"Tools","spawn_name":"GEAR_BedRoll","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_BedRoll","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "BedrollBearSkin": [
+      
+      {"category":"Tools","spawn_name":"GEAR_BearSkinBedRoll","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_BearSkinBedRoll","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "BedrollDown": [
+      
+      {"category":"Tools","spawn_name":"GEAR_BedRoll_Down","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_BedRoll_Down","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Blueflare": [
+      
+      {"category":"Tools","spawn_name":"GEAR_BlueFlare","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_BlueFlare","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Bow": [
+     
+      {"category":"Tools","spawn_name":"GEAR_Bow","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Bow","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "BowWoodwrights": [
+     
+      {"category":"Tools","spawn_name":"GEAR_Bow_Woodwrights","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Bow_Woodwrights","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "CanOpener": [
+      
+      {"category":"Tools","spawn_name":"GEAR_CanOpener","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_CanOpener","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CookingPot": [
+      
+      {"category":"Tools","spawn_name":"GEAR_CookingPot","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_CookingPot","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CookingSkillet": [
+     
+      {"category":"Tools","spawn_name":"GEAR_Skillet","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Skillet","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "CougarClawKnife": [
+      
+      {"category":"Tools","spawn_name":"GEAR_CougarClawKnife","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_CougarClawKnife","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Firestriker": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Firestriker","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Firestriker","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "FishingTackle": [
+      
+      {"category":"Tools","spawn_name":"GEAR_HookAndLine","reward_amount":4,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_HookAndLine","reward_amount":6,"quest_type":"monthly","enabled":true}
+    ],
+    "Flare": [
+      
+      {"category":"Tools","spawn_name":"GEAR_FlareA","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_FlareA","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "FlareGun": [
+      
+      {"category":"Tools","spawn_name":"GEAR_FlareGun","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_FlareGun","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Flashlight": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Flashlight","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Flashlight","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Fuse": [
+     
+      {"category":"Tools","spawn_name":"GEAR_Fuse","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Fuse","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Hacksaw": [
+     
+      {"category":"Tools","spawn_name":"GEAR_Hacksaw","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Hacksaw","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Hammer": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Hammer","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Hammer","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Hook": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Hook","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Hook","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "InsulatedFlask": [
+      
+      {"category":"Tools","spawn_name":"GEAR_InsulatedFlask_A","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_InsulatedFlask_A","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "JerryCanRusty": [
+      
+      {"category":"Tools","spawn_name":"GEAR_JerrycanRusty","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_JerrycanRusty","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Knife": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Knife","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Knife","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "KnifeImprovised": [
+     
+      {"category":"Tools","spawn_name":"GEAR_KnifeImprovised","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_KnifeImprovised","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "KnifeSurvival": [
+      
+      {"category":"Tools","spawn_name":"GEAR_SurvivalKnife","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_SurvivalKnife","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "LampFuel": [
+     
+      {"category":"Tools","spawn_name":"GEAR_LampFuel","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_LampFuel","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "LampFuelFull": [
+     
+      {"category":"Tools","spawn_name":"GEAR_LampFuelFull","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_LampFuelFull","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "LanternKerosene": [
+      
+      {"category":"Tools","spawn_name":"GEAR_KeroseneLampB","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_KeroseneLampB","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "Line": [
+      {"category":"Tools","spawn_name":"GEAR_Line","reward_amount":1,"quest_type":"daily","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Line","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Line","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "MagnifyingLens": [
+      
+      {"category":"Tools","spawn_name":"GEAR_MagnifyingLens","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_MagnifyingLens","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Prybar": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Prybar","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Prybar","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "RecycledCan": [
+      
+      {"category":"Tools","spawn_name":"GEAR_RecycledCan","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_RecycledCan","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Rope": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Rope","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Rope","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "SewingKit": [
+     
+      {"category":"Tools","spawn_name":"GEAR_SewingKit","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_SewingKit","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "SharpeningStone": [
+      
+      {"category":"Tools","spawn_name":"GEAR_SharpeningStone","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_SharpeningStone","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "SimpleTools": [
+      
+      {"category":"Tools","spawn_name":"GEAR_SimpleTools","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_SimpleTools","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "Snare": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Snare","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Snare","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "SprayPaintCan": [
+      
+      {"category":"Tools","spawn_name":"GEAR_SprayPaintCan","reward_amount":1,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_SprayPaintCan","reward_amount":1,"quest_type":"monthly","enabled":true}
+    ],
+    "ToolBelt": [
+      
+      {"category":"Tools","spawn_name":"GEAR_ToolBelt","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_ToolBelt","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Torch": [
+      {"category":"Tools","spawn_name":"GEAR_Torch","reward_amount":2,"quest_type":"daily","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Torch","reward_amount":4,"quest_type":"weekly","enabled":true},
+      {"category":"Tools","spawn_name":"GEAR_Torch","reward_amount":8,"quest_type":"monthly","enabled":true}
+    ],
+    "Travois": [
+      
+      {"category":"Tools","spawn_name":"GEAR_Travois","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_Travois","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "WireBundle": [
+      
+      {"category":"Tools","spawn_name":"GEAR_WireBundle","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Tools","spawn_name":"GEAR_WireBundle","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "Revolver": [
+      
+      {"category":"Ammunition","spawn_name":"GEAR_Revolver","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Ammunition","spawn_name":"GEAR_Revolver","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "RevolverAmmoBox": [
+      
+      {"category":"Ammunition","spawn_name":"GEAR_RevolverAmmoBox","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Ammunition","spawn_name":"GEAR_RevolverAmmoBox","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RevolverAmmoSingle": [
+      
+      {"category":"Ammunition","spawn_name":"GEAR_RevolverAmmoSingle","reward_amount":4,"quest_type":"weekly","enabled":true},
+      {"category":"Ammunition","spawn_name":"GEAR_RevolverAmmoSingle","reward_amount":8,"quest_type":"monthly","enabled":true}
+    ],
+    "Rifle": [
+      
+      {"category":"Ammunition","spawn_name":"GEAR_Rifle","reward_amount":1,"quest_type":"weekly","enabled":false},
+      {"category":"Ammunition","spawn_name":"GEAR_Rifle","reward_amount":1,"quest_type":"monthly","enabled":false}
+    ],
+    "RifleAmmoBox": [
+     
+      {"category":"Ammunition","spawn_name":"GEAR_RifleAmmoBox","reward_amount":2,"quest_type":"weekly","enabled":true},
+      {"category":"Ammunition","spawn_name":"GEAR_RifleAmmoBox","reward_amount":4,"quest_type":"monthly","enabled":true}
+    ],
+    "RifleAmmoSingle": [
+     
+      {"category":"Ammunition","spawn_name":"GEAR_RifleAmmoSingle","reward_amount":4,"quest_type":"weekly","enabled":true},
+      {"category":"Ammunition","spawn_name":"GEAR_RifleAmmoSingle","reward_amount":8,"quest_type":"monthly","enabled":true}
+    ]
+      }
+}

@@ -1,0 +1,71 @@
+###############################
+# Visual Studio / C# Junk
+###############################
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
+*.mdb
+*.log
+*.tmp
+*.bak
+*.db
+*.opendb
+*.VC.db
+
+###############################
+# Build Output
+###############################
+*.dll
+*.exe
+*.manifest
+
+###############################
+# MelonLoader Runtime Folders
+###############################
+MelonLoader/
+Mods/
+UserData/
+Plugins/
+Logs/
+
+###############################
+# NuGet / Package Restore
+###############################
+packages/
+*.nupkg
+*.snupkg
+
+###############################
+# Rider / JetBrains
+###############################
+.idea/
+*.sln.iml
+
+###############################
+# VSCode
+###############################
+.vscode/
+.history/
+
+###############################
+# OS Junk
+###############################
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+###############################
+# Build Artifacts
+###############################
+/releases/
+*.zip
+
+###############################
+# Project-specific
+###############################
+src/GearLookupCombined.json
+StickQuestMod.csproj.user

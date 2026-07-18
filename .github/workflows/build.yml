@@ -1,0 +1,62 @@
+name: MissionImpossible Build
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore QuestMod.csproj
+
+    - name: Build project
+      run: dotnet build QuestMod.csproj -c Release
+
+    - name: Prepare release folder
+      run: |
+        mkdir release
+        copy bin\Release\net6.0\MissionImpossible.dll release\
+        copy src\GearLookup.json release\
+        copy README.md release\
+        copy CHANGELOG.md release\
+        copy LICENSE release\
+
+    - name: Create ZIP
+      run: powershell Compress-Archive -Path release\* -DestinationPath MissionImpossible_release.zip
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MissionImpossible
+        path: MissionImpossible_release.zip
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: MissionImpossible
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: MissionImpossible_release.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
