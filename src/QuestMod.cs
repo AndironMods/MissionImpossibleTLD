@@ -67,7 +67,9 @@ namespace MissionImpossible
 
         // Track m_Units changes for stacked items
         private Dictionary<GearItem, int> _lastTrackedUnits = new Dictionary<GearItem, int>();
+        private Dictionary<GearItem, DateTime> _lastCallbackTime = new Dictionary<GearItem, DateTime>();  // Track when callback fired
         private DateTime _lastUnitsCheckTime = DateTime.Now;
+        private bool _needsSave = false;  // Flag to defer saves from callbacks
 
         private TimeOfDay TOD => GameManager.GetTimeOfDayComponent();
         private float CurrentHour => TOD.GetHoursPlayedNotPaused() % 24f;
@@ -281,11 +283,12 @@ namespace MissionImpossible
             }
 
             // Check for stacked items every 2 seconds (for items that don't trigger callback)
-            if ((DateTime.Now - _lastUnitsCheckTime).TotalSeconds > 2 && _modSettingsAvailable)
-            {
-                CheckForStackedItems();
-                _lastUnitsCheckTime = DateTime.Now;
-            }
+            // TEMPORARILY DISABLED - causes inventory hang
+            // if ((DateTime.Now - _lastUnitsCheckTime).TotalSeconds > 2 && _modSettingsAvailable)
+            // {
+            //     CheckForStackedItems();
+            //     _lastUnitsCheckTime = DateTime.Now;
+            // }
 
             // Check for quest resets every 60 seconds
             if ((DateTime.Now - _lastCheckTime).TotalSeconds > 60 && _modSettingsAvailable)
@@ -293,10 +296,14 @@ namespace MissionImpossible
                 CheckQuestResets();
                 _lastCheckTime = DateTime.Now;
             }
+            
+            // Save deferred changes (from callbacks)
+            if (_needsSave)
+            {
+                SaveData();
+                _needsSave = false;
+            }
         }
-
-
-
 
         private void CheckForStackedItems()
         {
@@ -319,6 +326,13 @@ namespace MissionImpossible
                         if (!_lastTrackedUnits.ContainsKey(gearItem))
                             continue;
 
+                        // Skip if this item was just processed by AddGear callback (within 0.5 seconds)
+                        if (_lastCallbackTime.ContainsKey(gearItem))
+                        {
+                            if ((DateTime.Now - _lastCallbackTime[gearItem]).TotalSeconds < 0.5)
+                                continue;  // Skip to avoid double-counting
+                        }
+
                         int lastUnits = _lastTrackedUnits[gearItem];
                         
                         // Get current units from stackable item
@@ -333,7 +347,8 @@ namespace MissionImpossible
                         {
                             int added = currentUnits - lastUnits;
 
-                            // Fire callback for each additional unit
+                            // Fire ONE callback per unit added (quantity will be 1 each time)
+                            // This ensures each item is counted once, not as total stack
                             for (int i = 0; i < added; i++)
                             {
                                 OnInventoryItemAdded(gearItem, isBulkStack: true);
@@ -342,6 +357,12 @@ namespace MissionImpossible
                             // Update tracked units
                             if (_lastTrackedUnits.ContainsKey(gearItem))
                                 _lastTrackedUnits[gearItem] = currentUnits;
+                        }
+                        // Clean up old callback time tracking to prevent memory leak
+                        var oldCallbacks = _lastCallbackTime.Where(kvp => (DateTime.Now - kvp.Value).TotalSeconds > 5).ToList();
+                        foreach (var item in oldCallbacks)
+                        {
+                            _lastCallbackTime.Remove(item.Key);
                         }
                     }
                     catch { }
@@ -518,20 +539,27 @@ namespace MissionImpossible
             float currentHour = GetCurrentHour();
             
             // Calculate quest period end time
+            // Quests always start at 9:00 AM and end at 8:50 AM (next period)
+            const float QUEST_START_HOUR = 9.0f;      // 9:00 AM
+            const float QUEST_END_HOUR = 8.833333f;   // 8:50 AM (8 + 50/60)
+            
+            int startDay = currentDay;
+            float startHour = QUEST_START_HOUR;
+            
             int endDay = currentDay;
-            float endHour = currentHour;
+            float endHour = QUEST_END_HOUR;
             
             if (questType.Equals("Daily", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 1;  // Ends next day at same time
+                endDay = currentDay + 1;  // Ends tomorrow at 8:50 AM
             }
             else if (questType.Equals("Weekly", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 7;  // Ends 7 days from now at same time
+                endDay = currentDay + 7;  // Ends in 7 days at 8:50 AM
             }
             else if (questType.Equals("Monthly", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 30;  // Ends 30 days from now at same time
+                endDay = currentDay + 30;  // Ends in 30 days at 8:50 AM
             }
 
             var quest = new Quest
@@ -542,8 +570,8 @@ namespace MissionImpossible
                 CurrentAmount = 0,
                 RewardKey = rewardVariant.spawn_name,   // Use spawn_name, not dictionary key!
                 RewardAmount = rewardAmount,
-                StartDay = currentDay,
-                StartHour = currentHour,
+                StartDay = startDay,
+                StartHour = startHour,
                 EndDay = endDay,
                 EndHour = endHour
             };
@@ -615,11 +643,16 @@ namespace MissionImpossible
                     int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
                     int neededCount = targetCount - currentCount;
                     
-                    MelonLogger.Msg($"[QuestMod] {quest.Type}: {currentCount} active, {targetCount} target, adding {neededCount}");
-                    
-                    for (int i = 0; i < neededCount; i++)
+                    if (neededCount > 0)
                     {
-                        GenerateQuestOfType(quest.Type);
+                        MelonLogger.Msg($"[QuestMod] {quest.Type}: {currentCount} active, {targetCount} target, generating {neededCount} quest(s)...");
+                        
+                        for (int i = 0; i < neededCount; i++)
+                        {
+                            GenerateQuestOfType(quest.Type);
+                        }
+                        
+                        MelonLogger.Msg($"[QuestMod] {quest.Type} quest(s) generated successfully");
                     }
                     
                     // Final save to ensure all changes are persisted
@@ -877,6 +910,9 @@ namespace MissionImpossible
 
         private void SaveData()
         {
+            // NOTE: ModSettings UI is read-only and doesn't auto-refresh when quest data changes.
+            // The actual quest data in QuestData.json IS updated correctly and used by the game.
+            // To see updated quest counts in ModSettings, close and re-open the settings panel.
             try
             {
                 string dirPath = Path.GetDirectoryName(QuestDataPath);
@@ -948,18 +984,9 @@ namespace MissionImpossible
                 if (quest.CollectKey.Equals(gearItem.name, System.StringComparison.OrdinalIgnoreCase))
                 {
                     // Get quantity - handle stackable items
-                    int quantity = 1;
-                    if (gearItem.m_StackableItem != null)
-                    {
-                        try
-                        {
-                            quantity = gearItem.m_StackableItem.m_Units;
-                        }
-                        catch
-                        {
-                            quantity = 1;
-                        }
-                    }
+                    // IMPORTANT: AddGear is called ONCE per pickup, so it's always +1
+                    // Don't read m_StackableItem.m_Units (that's the total stack size, not what was added)
+                    int quantity = 1;  // Always 1 per pickup event
                     
                     quest.CurrentAmount += quantity;
                     
@@ -971,12 +998,17 @@ namespace MissionImpossible
                     
                     matchFound = true;
                     
+                    // Record when this item was last processed by AddGear callback
+                    if (!Instance._lastCallbackTime.ContainsKey(gearItem))
+                        Instance._lastCallbackTime[gearItem] = DateTime.Now;
+                    else
+                        Instance._lastCallbackTime[gearItem] = DateTime.Now;
+                    
                     MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} quest - {quest.CurrentAmount}/{quest.RequiredAmount} (added {quantity})");
                     
-                    Instance.SaveData();
-                    
-                    // Only track progress here, don't complete yet
-                    // Completion will be handled by OnUpdate after period ends
+                    // DON'T call SaveData here - defer it to avoid callback recursion
+                    // SaveData will be called by CheckQuestResets every 60 seconds
+                    Instance._needsSave = true;
                     if (quest.CurrentAmount >= quest.RequiredAmount && Instance._settings.EnableDetailedLogging)
                     {
                         MelonLogger.Msg($"[QuestMod] {quest.Type} quest objective complete! Period must end before reward is given.");
