@@ -1,9 +1,8 @@
-Mission Impossible Mod for The Long Dark
+Mission Impossible Mod for The Long Dark - 
 A fully customizable quest systems for long term survival and engagement.
 
 # Overview
 Mission Impossible adds a lightweight quest system to The Long Dark.
-
 - New request are generated for each day, week, month
 - Collect randomly selected item
 - Receive randomly selected reward
@@ -19,22 +18,22 @@ Mission Impossible adds a lightweight quest system to The Long Dark.
 - Progress saved in QuestData.json
 - Fully customizable Quest and Rewards in GearLookup.json
 - F2 debug shortcut for testing
-- Clean, modular C# source code in src/
 
 # Installation
 1. Install MelonLoader
 Download MelonLoader 0.7.x from the official site and install it into your TLD directory.
-2. Download Mission Impossible Mod
+2. Download the ModSettings.dll from the offical site and install it in you Mod Folder.
+3. Download Mission Impossible Mod
 Download the latest release ZIP from the GitHub Releases page.
-3. Extract the ZIP
-Extract the contents into:
-C:\Program Files (x86)\Steam\steamapps\common\TheLongDark\Mods
+4. Extract the ZIP
+Extract the contents into: C:\Program Files (x86)\Steam\steamapps\common\TheLongDark\Mods
 Your folder should look like:
 Mods/
- ├─ MissionImpossible.dll
- ├─ GearLookup.json
+- MissionImpossible.dll
+- GearLookup.json
+5. Update ModSetting in Option to your needs.
 
 # Requirements
 - MelonLoader 0.7.x
 - The Long Dark v2.55+
-- Mod Settings
+- ModSettings v2.2.5
