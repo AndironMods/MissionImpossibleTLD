@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: windows-latest
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
+      new_version: ${{ steps.version.outputs.new_version }}
 
     steps:
     - name: Checkout repository
@@ -21,31 +21,11 @@ jobs:
       with:
         dotnet-version: '6.0.x'
 
-    # AUTO-VERSIONING
-    - name: Get latest tag
-      id: get_tag
+    # ALWAYS USE "latest" VERSION
+    - name: Set version
+      id: version
       run: |
-        $tag = git describe --tags --abbrev=0
-        if (-not $tag) { $tag = "v1.0.0" }
-        echo "tag=$tag" >> $env:GITHUB_OUTPUT
-
-    - name: Increment version
-      id: bump
-      run: |
-        $old = "${{ steps.get_tag.outputs.tag }}"
-        $parts = $old.TrimStart("v").Split(".")
-        $major = [int]$parts[0]
-        $minor = [int]$parts[1]
-        $patch = [int]$parts[2] + 1
-        $new = "v$major.$minor.$patch"
-        echo "new_version=$new" >> $env:GITHUB_OUTPUT
-
-    - name: Create new tag
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        git tag ${{ steps.bump.outputs.new_version }}
-        git push origin ${{ steps.bump.outputs.new_version }}
+        echo "new_version=MissionImpossible_latest" >> $env:GITHUB_OUTPUT
 
     - name: Restore dependencies
       run: dotnet restore QuestMod.csproj
@@ -63,13 +43,13 @@ jobs:
         copy LICENSE release\
 
     - name: Create ZIP
-      run: powershell Compress-Archive -Path release\* -DestinationPath MissionImpossible_release.zip
+      run: powershell Compress-Archive -Path release\* -DestinationPath MissionImpossible_latest.zip
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: MissionImpossible
-        path: MissionImpossible_release.zip
+        name: MissionImpossible_latest
+        path: MissionImpossible_latest.zip
 
   release:
     needs: build
@@ -79,12 +59,13 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: MissionImpossible
+        name: MissionImpossible_latest
 
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ needs.build.outputs.new_version }}
-        files: MissionImpossible_release.zip
+        name: MissionImpossible_latest
+        files: MissionImpossible_latest.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
