@@ -2,8 +2,7 @@ name: MissionImpossible Build
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "v*" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -13,11 +12,39 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0   # required for tagging
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '6.0.x'
+
+    # AUTO-VERSIONING
+    - name: Get latest tag
+      id: get_tag
+      run: |
+        $tag = git describe --tags --abbrev=0
+        if (-not $tag) { $tag = "v1.0.0" }
+        echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+    - name: Increment version
+      id: bump
+      run: |
+        $old = "${{ steps.get_tag.outputs.tag }}"
+        $parts = $old.TrimStart("v").Split(".")
+        $major = [int]$parts[0]
+        $minor = [int]$parts[1]
+        $patch = [int]$parts[2] + 1
+        $new = "v$major.$minor.$patch"
+        echo "new_version=$new" >> $env:GITHUB_OUTPUT
+
+    - name: Create new tag
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git tag ${{ steps.bump.outputs.new_version }}
+        git push origin ${{ steps.bump.outputs.new_version }}
 
     - name: Restore dependencies
       run: dotnet restore QuestMod.csproj
@@ -46,7 +73,6 @@ jobs:
   release:
     needs: build
     runs-on: windows-latest
-    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
     - name: Download artifact
@@ -54,9 +80,10 @@ jobs:
       with:
         name: MissionImpossible
 
-    - name: Create GitHub Release
+    - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        tag_name: ${{ needs.build.outputs.new_version }}
         files: MissionImpossible_release.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
