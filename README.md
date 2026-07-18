@@ -14,7 +14,7 @@ Mission Impossible adds a lightweight quest system to The Long Dark.
 - Random reward item (from items_as_reward)
 - Automatic daily reset at 09:00
 - Progress saved in QuestData.json
-- Support for 3 different Difficultys
+- Support for 3 different Difficulties
 - Fully customizable Quest and Reward Amount in GearLookup.json
 - Fully customizable Daily/Weekly/Monthly Quests Types in GearLookup.json
 - Customize Number of Quests per Daily/Weekly/Monthly
