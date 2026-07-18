@@ -20,16 +20,16 @@ Mission Impossible adds a lightweight quest system to The Long Dark.
 - F2 debug shortcut for testing
 
 # Installation
-Download MelonLoader 0.7.x from the official site and install it into your TLD directory.
+1. Download MelonLoader 0.7.x from the official site and install it into your TLD directory.
 2. Download the ModSettings.dll from the offical site and install it in you Mod Folder.
 3. Download Mission Impossible Mod
-Download the latest release ZIP from the GitHub Releases page.
-4. Extract the contents into: C:\Program Files (x86)Steam\steamappscommon\TheLongDarkMods
-Your folder should look like:
+4. Extract the contents into:
+C:\Program Files (x86)Steam\steamappscommon\TheLongDarkMods
+Your folder should look like this:
 Mods/
 - MissionImpossible.dll
 - GearLookup.json
-5. Update ModSetting in Options>Mod Settings>Mission Impossible to your needs.
+6. Update ModSetting in Options>Mod Settings>Mission Impossible to your needs.
 
 # Requirements
 - MelonLoader 0.7.x
