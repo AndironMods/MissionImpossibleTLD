@@ -67,5 +67,5 @@ Desktop.ini
 ###############################
 # Project-specific
 ###############################
-src/GearLookupCombined.json
-StickQuestMod.csproj.user
+#src/GearLookup.json
+QuestMod.csproj.user
