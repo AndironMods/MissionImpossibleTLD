@@ -64,7 +64,7 @@ jobs:
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ needs.build.outputs.new_version }}
+        tag_name: master
         name: MissionImpossible_latest
         files: MissionImpossible_latest.zip
       env:
