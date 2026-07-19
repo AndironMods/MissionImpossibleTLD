@@ -66,9 +66,9 @@ namespace MissionImpossible
         public bool AllowResources = true;
 
         // ==================== DISPLAY & LOGGING SETTINGS ====================
-        [Name("Hide Reward")]
-        [Description("Hide reward amounts in console log (show *** instead)")]
-        public bool HideReward = true;
+        [Name("Show Reward")]
+        [Description("Show reward amounts in console log (hide *** if disabled)")]
+        public bool ShowReward = false;
         
         [Name("Enable Detailed Logging")]
         [Description("Log detailed quest information")]
@@ -87,7 +87,10 @@ namespace MissionImpossible
         public void InitializeSettings()
         {
             AddToModSettings("Mission Impossible");
-            LoadSettingsFromDisk();  // Load saved settings after registering
+            LoadSettingsFromDisk();
+            
+            // Always save settings (creates file if it doesn't exist)
+            SaveSettingsToDisk();
         }
 
         // ==================== SETTINGS PERSISTENCE ====================
@@ -144,8 +147,11 @@ namespace MissionImpossible
                     if (root.TryGetProperty("AllowResources", out var resValue))
                         AllowResources = resValue.GetBoolean();
 
-                    if (root.TryGetProperty("HideReward", out var hideRewardValue))
-                        HideReward = hideRewardValue.GetBoolean();
+                    if (root.TryGetProperty("ShowReward", out var showRewardValue))
+                        ShowReward = showRewardValue.GetBoolean();
+                    else if (root.TryGetProperty("HideReward", out var hideRewardValue))
+                        // Backwards compatibility: invert HideReward to ShowReward
+                        ShowReward = !hideRewardValue.GetBoolean();
 
                     if (root.TryGetProperty("EnableDetailedLogging", out var loggingValue))
                         EnableDetailedLogging = loggingValue.GetBoolean();
@@ -292,7 +298,7 @@ namespace MissionImpossible
                     { "AllowTools", AllowTools },
                     { "AllowAmmunition", AllowAmmunition },
                     { "AllowResources", AllowResources },
-                    { "HideReward", HideReward },
+                    { "ShowReward", ShowReward },
                     { "EnableDetailedLogging", EnableDetailedLogging },
                     { "SuppressPickupLogging", SuppressPickupLogging }
                 };
