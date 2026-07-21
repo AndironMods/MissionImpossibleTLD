@@ -74,9 +74,9 @@ namespace MissionImpossible
         [Description("Log detailed quest information")]
         public bool EnableDetailedLogging = true;
         
-        [Name("Suppress Pickup Logging")]
-        [Description("Don't log item pickup events")]
-        public bool SuppressPickupLogging = true;
+        [Name("Enable Pickup Logging")]
+        [Description("Log item pickup events")]
+        public bool EnablePickupLogging = false;
 
         private string _settingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -91,6 +91,7 @@ namespace MissionImpossible
             
             // Always save settings (creates file if it doesn't exist)
             SaveSettingsToDisk();
+	    LoadSettingsFromDisk();
         }
 
         // ==================== SETTINGS PERSISTENCE ====================
@@ -109,29 +110,33 @@ namespace MissionImpossible
                 {
                     var root = doc.RootElement;
 
-                    // Load all settings from JSON
+                    // Load difficulty level
                     if (root.TryGetProperty("DifficultyLevel", out var difficultyValue))
                         if (Enum.TryParse<DifficultyLevel>(difficultyValue.GetString(), out var diff))
                             DifficultyLevel = diff;
 
+                    // Load daily quest settings
                     if (root.TryGetProperty("DailyQuestCount", out var dailyValue))
                         DailyQuestCount = dailyValue.GetInt32();
 
                     if (root.TryGetProperty("EnableDailyQuests", out var enableDailyValue))
                         EnableDailyQuests = enableDailyValue.GetBoolean();
 
+                    // Load weekly quest settings
                     if (root.TryGetProperty("WeeklyQuestCount", out var weeklyValue))
                         WeeklyQuestCount = weeklyValue.GetInt32();
 
                     if (root.TryGetProperty("EnableWeeklyQuests", out var enableWeeklyValue))
                         EnableWeeklyQuests = enableWeeklyValue.GetBoolean();
 
+                    // Load monthly quest settings
                     if (root.TryGetProperty("MonthlyQuestCount", out var monthlyValue))
                         MonthlyQuestCount = monthlyValue.GetInt32();
 
                     if (root.TryGetProperty("EnableMonthlyQuests", out var enableMonthlyValue))
                         EnableMonthlyQuests = enableMonthlyValue.GetBoolean();
 
+                    // Load category filters
                     if (root.TryGetProperty("AllowClothing", out var clothingValue))
                         AllowClothing = clothingValue.GetBoolean();
 
@@ -147,17 +152,15 @@ namespace MissionImpossible
                     if (root.TryGetProperty("AllowResources", out var resValue))
                         AllowResources = resValue.GetBoolean();
 
+                    // Load display/logging settings
                     if (root.TryGetProperty("ShowReward", out var showRewardValue))
                         ShowReward = showRewardValue.GetBoolean();
-                    else if (root.TryGetProperty("HideReward", out var hideRewardValue))
-                        // Backwards compatibility: invert HideReward to ShowReward
-                        ShowReward = !hideRewardValue.GetBoolean();
 
                     if (root.TryGetProperty("EnableDetailedLogging", out var loggingValue))
                         EnableDetailedLogging = loggingValue.GetBoolean();
 
-                    if (root.TryGetProperty("SuppressPickupLogging", out var suppressValue))
-                        SuppressPickupLogging = suppressValue.GetBoolean();
+                    if (root.TryGetProperty("EnablePickupLogging", out var enablePickupValue))
+                        EnablePickupLogging = enablePickupValue.GetBoolean();
                 }
 
                 MelonLogger.Msg($"[QuestModSettings] Settings loaded from: {_settingsPath}");
@@ -168,50 +171,100 @@ namespace MissionImpossible
             }
         }
 
-        // ==================== HELPER METHODS ====================
-        public (float RequiredMultiplier, float RewardMultiplier) GetDifficultyMultipliers()
+        private void SaveSettingsToDisk()
+        {
+            try
+            {
+                var settings = new Dictionary<string, object>
+                {
+                    { nameof(DifficultyLevel), DifficultyLevel.ToString() },
+                    { nameof(DailyQuestCount), DailyQuestCount },
+                    { nameof(EnableDailyQuests), EnableDailyQuests },
+                    { nameof(WeeklyQuestCount), WeeklyQuestCount },
+                    { nameof(EnableWeeklyQuests), EnableWeeklyQuests },
+                    { nameof(MonthlyQuestCount), MonthlyQuestCount },
+                    { nameof(EnableMonthlyQuests), EnableMonthlyQuests },
+                    { nameof(AllowClothing), AllowClothing },
+                    { nameof(AllowFood), AllowFood },
+                    { nameof(AllowTools), AllowTools },
+                    { nameof(AllowAmmunition), AllowAmmunition },
+                    { nameof(AllowResources), AllowResources },
+                    { nameof(ShowReward), ShowReward },
+                    { nameof(EnableDetailedLogging), EnableDetailedLogging },
+                    { nameof(EnablePickupLogging), EnablePickupLogging }
+                };
+
+                string dirPath = Path.GetDirectoryName(_settingsPath);
+                if (!Directory.Exists(dirPath))
+                    Directory.CreateDirectory(dirPath);
+
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(settings, options);
+                File.WriteAllText(_settingsPath, json);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[QuestMod] Error saving settings to disk: {ex.Message}");
+            }
+        }
+
+        // ==================== DIFFICULTY CALCULATIONS ====================
+        /// <summary>
+        /// Calculate the required amount based on difficulty setting (0.5x, 1.0x, 2.0x)
+        /// </summary>
+        public int ApplyRequiredMultiplier(int baseRequired)
         {
             return DifficultyLevel switch
             {
-                DifficultyLevel.Easy => (0.5f, 1.0f),    // Half requirements, same reward
-                DifficultyLevel.Normal => (1.0f, 1.0f),  // No change
-                DifficultyLevel.Hard => (2.0f, 1.0f),    // Double requirements, same reward
-                _ => (1.0f, 1.0f)
+                DifficultyLevel.Easy => Math.Max(1, (int)(baseRequired * 0.5f)),
+                DifficultyLevel.Normal => baseRequired,
+                DifficultyLevel.Hard => baseRequired * 2,
+                _ => baseRequired
             };
         }
 
+        /// <summary>
+        /// Calculate the reward amount based on difficulty setting
+        /// </summary>
+        public int ApplyRewardMultiplier(int baseReward)
+        {
+            return DifficultyLevel switch
+            {
+                DifficultyLevel.Easy => baseReward,
+                DifficultyLevel.Normal => baseReward,
+                DifficultyLevel.Hard => Math.Max(1, (int)(baseReward * 1.5f)),
+                _ => baseReward
+            };
+        }
+
+        /// <summary>
+        /// Get a human-readable description of the current difficulty level
+        /// </summary>
         public string GetDifficultyDescription()
         {
             return DifficultyLevel switch
             {
-                DifficultyLevel.Easy => "Pilgrim (Easy - 0.5x required)",
-                DifficultyLevel.Normal => "Voyager/Stalker (Normal - 1.0x)",
-                DifficultyLevel.Hard => "Interloper/Misery (Hard - 2.0x required)",
+                DifficultyLevel.Easy => "Easy (0.5x required)",
+                DifficultyLevel.Normal => "Normal (1.0x)",
+                DifficultyLevel.Hard => "Hard (2.0x required)",
                 _ => "Unknown"
             };
         }
 
+        /// <summary>
+        /// Get the list of allowed item categories based on current settings
+        /// </summary>
         public List<string> GetAllowedCategories()
         {
-            List<string> allowed = new();
-            if (AllowClothing) allowed.Add("Clothing");
-            if (AllowFood) allowed.Add("Food");
-            if (AllowTools) allowed.Add("Tools");
-            if (AllowAmmunition) allowed.Add("Ammunition");
-            if (AllowResources) allowed.Add("Resources");
-            return allowed;
-        }
-
-        public int ApplyRequiredMultiplier(int amount)
-        {
-            var (multiplier, _) = GetDifficultyMultipliers();
-            return (int)Math.Ceiling(amount * multiplier);
-        }
-
-        public int ApplyRewardMultiplier(int amount)
-        {
-            var (_, multiplier) = GetDifficultyMultipliers();
-            return (int)Math.Ceiling(amount * multiplier);
+            var allowedCategories = new List<string>();
+            
+            if (AllowClothing) allowedCategories.Add("Clothing");
+            if (AllowFood) allowedCategories.Add("Food");
+            if (AllowTools) allowedCategories.Add("Tools");
+            if (AllowAmmunition) allowedCategories.Add("Ammunition");
+            if (AllowResources) allowedCategories.Add("Resources");
+            
+            return allowedCategories;
         }
 
         private bool _questSettingsChanged = false;
@@ -227,12 +280,15 @@ namespace MissionImpossible
             
             // Save settings to disk
             SaveSettingsToDisk();
+
+	    //Load settings from disk
+	    LoadSettingsFromDisk();
             
             // Only regenerate if quest-related settings actually changed
             if (_questSettingsChanged && QuestMod.Instance != null)
             {
                 MelonLogger.Msg("[QuestModSettings] Quest settings changed - Regenerating quests...");
-                QuestMod.Instance.RegenerateQuestsForSettingsChange();
+                QuestMod.Instance.RegenerateQuestsForSettingsChange(showCreationLogs: true);
                 _questSettingsChanged = false;  // Reset flag
             }
             else if (!_questSettingsChanged)
@@ -271,47 +327,6 @@ namespace MissionImpossible
                 {
                     _questSettingsChanged = true;
                 }
-            }
-        }
-
-        // ==================== SETTINGS PERSISTENCE ====================
-        private void SaveSettingsToDisk()
-        {
-            try
-            {
-                string dirPath = Path.GetDirectoryName(_settingsPath);
-                if (!Directory.Exists(dirPath))
-                    Directory.CreateDirectory(dirPath);
-
-                // Manually serialize all public fields to JSON
-                var settings = new Dictionary<string, object>
-                {
-                    { "DifficultyLevel", DifficultyLevel.ToString() },
-                    { "DailyQuestCount", DailyQuestCount },
-                    { "EnableDailyQuests", EnableDailyQuests },
-                    { "WeeklyQuestCount", WeeklyQuestCount },
-                    { "EnableWeeklyQuests", EnableWeeklyQuests },
-                    { "MonthlyQuestCount", MonthlyQuestCount },
-                    { "EnableMonthlyQuests", EnableMonthlyQuests },
-                    { "AllowClothing", AllowClothing },
-                    { "AllowFood", AllowFood },
-                    { "AllowTools", AllowTools },
-                    { "AllowAmmunition", AllowAmmunition },
-                    { "AllowResources", AllowResources },
-                    { "ShowReward", ShowReward },
-                    { "EnableDetailedLogging", EnableDetailedLogging },
-                    { "SuppressPickupLogging", SuppressPickupLogging }
-                };
-
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(settings, options);
-                File.WriteAllText(_settingsPath, json);
-                
-                MelonLogger.Msg($"[QuestModSettings] Settings saved to: {_settingsPath}");
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestModSettings] Error saving settings: {ex.Message}");
             }
         }
     }

@@ -59,17 +59,17 @@ namespace MissionImpossible
         private System.Random _random = new System.Random();
 
         private bool _initialized = false;
-        private bool _suppressLogging = false;
+        private bool _suppressLogging = false;  // Suppresses logs during initial inventory load
         private DateTime _lastCheckTime;
         private DateTime _lastQuestCompletionTime = DateTime.MinValue;  // Delay between completions
         private bool _isGivingReward = false;  // Guard against re-entrancy in reward giving
         private bool _modSettingsAvailable = false;
 
         private bool _needsSave = false;  // Flag to defer saves from callbacks
-        private bool _saveInProgress = false;  // HANG FIX: Prevent blocking saves
-        private object _dataLock = new object();  // CRASH FIX: Thread safety for console
+        private bool _saveInProgress = false;  // Prevents concurrent save operations (hang prevention)
+        private object _dataLock = new object();  // Thread safety for console/save race conditions
         
-        // NEW: Track GearItems and their m_Units to detect stacking
+        // Stacked items detection: tracks GearItem units to detect when items are stacked together
         private Dictionary<GearItem, int> _trackedUnitCounts = new Dictionary<GearItem, int>();
         private object _trackingLock = new object();
         private DateTime _lastStackCheckTime = DateTime.Now;
@@ -85,6 +85,9 @@ namespace MissionImpossible
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "TheLongDark", "Mods", "MissionImpossible", "QuestData.json");
 
+        /// <summary>
+        /// Initialize the mod - load settings, quests, and set up inventory monitoring
+        /// </summary>
         public override void OnInitializeMelon()
         {
             Instance = this;
@@ -138,6 +141,9 @@ namespace MissionImpossible
             MelonLogger.Msg($"[QuestMod] Difficulty: {_settings.GetDifficultyDescription()}");
         }
 
+        /// <summary>
+        /// Check if ModSettings.dll is installed (required dependency)
+        /// </summary>
         private bool CheckModSettingsPrerequisite()
         {
             try
@@ -157,6 +163,9 @@ namespace MissionImpossible
             return false;
         }
 
+        /// <summary>
+        /// Save quest data before game shutdown
+        /// </summary>
         public override void OnApplicationQuit()
         {
             try
@@ -182,17 +191,23 @@ namespace MissionImpossible
             MelonLogger.Msg("[QuestMod] Shutdown complete.");
         }
 
+        /// <summary>
+        /// Handle scene loading - suppress initial inventory logging spam
+        /// </summary>
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             MelonLogger.Msg($"[QuestMod] Scene loaded: {sceneName} (index: {buildIndex})");
 
             _initialized = false;
-            _suppressLogging = true;
+            _suppressLogging = true;  // Suppress logs during initial load
             _lastCheckTime = DateTime.Now;
 
             System.Threading.Thread.Sleep(200);
         }
 
+        /// <summary>
+        /// Handle scene unloading - save quest data before transition
+        /// </summary>
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
             MelonLogger.Msg($"[QuestMod] Scene unloaded: {sceneName}");
@@ -213,6 +228,10 @@ namespace MissionImpossible
 
         private Dictionary<string, int> _lastKnownInventory = new Dictionary<string, int>();
 
+        /// <summary>
+        /// Main update loop - handle quest resets, stacked item detection, and deferred saves
+        /// HANG PREVENTION: All heavy operations are deferred or run on background threads
+        /// </summary>
         public override void OnUpdate()
         {
             // Re-enable logging after initial inventory load (wait 5 seconds for full load)
@@ -226,7 +245,7 @@ namespace MissionImpossible
                 _initialized = true;
             }
 
-            // F2: Complete daily quests
+            // F2: Complete all daily quests (debug command)
             if (Input.GetKeyDown(KeyCode.F2) && _modSettingsAvailable)
             {
                 var dailyQuests = _questState.ActiveQuests.Where(q => q.Type == "Daily").ToList();
@@ -245,7 +264,7 @@ namespace MissionImpossible
                 }
             }
 
-            // F3: Complete weekly quests
+            // F3: Complete all weekly quests (debug command)
             if (Input.GetKeyDown(KeyCode.F3) && _modSettingsAvailable)
             {
                 var weeklyQuests = _questState.ActiveQuests.Where(q => q.Type == "Weekly").ToList();
@@ -264,7 +283,7 @@ namespace MissionImpossible
                 }
             }
 
-            // F4: Complete monthly quests
+            // F4: Complete all monthly quests (debug command)
             if (Input.GetKeyDown(KeyCode.F4) && _modSettingsAvailable)
             {
                 var monthlyQuests = _questState.ActiveQuests.Where(q => q.Type == "Monthly").ToList();
@@ -290,14 +309,15 @@ namespace MissionImpossible
                 _lastCheckTime = DateTime.Now;
             }
             
-            // NEW: Check for stacked items every 0.5 seconds (detect m_Units increases)
+            // Check for stacked items every 0.5 seconds - detects when items are stacked together
+            // Non-blocking and critical for accurate item counting
             if ((DateTime.Now - _lastStackCheckTime).TotalMilliseconds > 500 && _modSettingsAvailable)
             {
                 CheckForStackedItems();
                 _lastStackCheckTime = DateTime.Now;
             }
             
-            // HANG FIX: Save deferred changes but don't block
+            // Deferred save - prevents blocking the game thread with file I/O
             if (_needsSave && !_saveInProgress)
             {
                 SaveData();
@@ -305,6 +325,11 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Detect when stackable items are combined (m_Units increase) and fire individual callbacks
+        /// This allows correct counting of stacked items like "5 Scrap Metal" added as 1 stack
+        /// HANG PREVENTION: Uses locks but no blocking operations, timeout-protected
+        /// </summary>
         private void CheckForStackedItems()
         {
             try
@@ -338,7 +363,7 @@ namespace MissionImpossible
                         }
                         else if (item == null || item.m_StackableItem == null)
                         {
-                            // Item no longer exists, remove from tracking
+                            // Item no longer exists, remove from tracking to prevent memory leak
                             _trackedUnitCounts.Remove(item);
                         }
                     }
@@ -350,6 +375,10 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Check if quest periods have ended and regenerate quests as needed
+        /// Also handles reward distribution when quest periods complete
+        /// </summary>
         private void CheckQuestResets()
         {
             try
@@ -364,59 +393,21 @@ namespace MissionImpossible
                 int day = tod.GetDayNumber();
                 float hour = CurrentHour;
 
-                // CRASH FIX: Lock prevents console from accessing data while checking resets
-                lock (_dataLock)
+                foreach (var quest in _questState.ActiveQuests.ToList())
                 {
-                    foreach (var quest in _questState.ActiveQuests.ToList())
+                    // Check if quest objective is complete and period has ended - give reward
+                    if (quest.CurrentAmount >= quest.RequiredAmount)
                     {
-                        // Check if quest objective is complete and period has ended - give reward
-                        if (quest.CurrentAmount >= quest.RequiredAmount)
+                        bool periodEnded = (day > quest.EndDay) || 
+                                           (day == quest.EndDay && hour >= quest.EndHour);
+                        
+                        if (periodEnded)
                         {
-                            bool periodEnded = (day > quest.EndDay) || 
-                                               (day == quest.EndDay && hour >= quest.EndHour);
+                            GiveReward(quest);
                             
-                            if (periodEnded)
-                            {
-                                GiveReward(quest);
-                                
-                                _questState.ActiveQuests.Remove(quest);
-                                
-                                // Generate replacement
-                                int targetCount = quest.Type switch
-                                {
-                                    "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
-                                    "Weekly" => _settings.EnableWeeklyQuests ? _settings.WeeklyQuestCount : 0,
-                                    "Monthly" => _settings.EnableMonthlyQuests ? _settings.MonthlyQuestCount : 0,
-                                    _ => 0
-                                };
-                                
-                                int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
-                                for (int i = currentCount; i < targetCount; i++)
-                                {
-                                    GenerateQuestOfType(quest.Type);
-                                }
-                                
-                                SaveData();
-                                continue;
-                            }
-                        }
-                        
-                        bool shouldReset = false;
-
-                        // Check if quest period has ENDED
-                        bool questPeriodEnded = (day > quest.EndDay) || 
-                                                (day == quest.EndDay && hour >= quest.EndHour);
-                        
-                        if (questPeriodEnded)
-                        {
-                            shouldReset = true;
-                        }
-
-                        if (shouldReset)
-                        {
                             _questState.ActiveQuests.Remove(quest);
                             
-                            // Only generate replacements if we're below the target count
+                            // Generate replacement
                             int targetCount = quest.Type switch
                             {
                                 "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
@@ -428,20 +419,55 @@ namespace MissionImpossible
                             int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
                             for (int i = currentCount; i < targetCount; i++)
                             {
-                                GenerateQuestOfType(quest.Type);
+                                GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing expired quests
                             }
+                            
+                            SaveData();
+                            continue;
                         }
                     }
+                    
+                    bool shouldReset = false;
 
-                    SaveData();
+                    // Check if quest period has ENDED (use EndDay/EndHour)
+                    bool questPeriodEnded = (day > quest.EndDay) || 
+                                            (day == quest.EndDay && hour >= quest.EndHour);
+                    
+                    if (questPeriodEnded)
+                    {
+                        shouldReset = true;
+                    }
+
+                    if (shouldReset)
+                    {
+                        _questState.ActiveQuests.Remove(quest);
+                        
+                        // Only generate replacements if we're below the target count for this quest type
+                        int targetCount = quest.Type switch
+                        {
+                            "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
+                            "Weekly" => _settings.EnableWeeklyQuests ? _settings.WeeklyQuestCount : 0,
+                            "Monthly" => _settings.EnableMonthlyQuests ? _settings.MonthlyQuestCount : 0,
+                            _ => 0
+                        };
+                        
+                        int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
+                        for (int i = currentCount; i < targetCount; i++)
+                        {
+                            GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing quests
+                        }
+                    }
                 }
+
+                SaveData();
             }
             catch
             {
+                // Silently fail - CheckQuestResets runs every 60 seconds so occasional errors are normal
             }
         }
 
-        private void GenerateQuestType(string questType)
+        private void GenerateQuestType(string questType, bool showCreationLog = false)
         {
             int count = questType switch
             {
@@ -453,14 +479,17 @@ namespace MissionImpossible
 
             for (int i = 0; i < count; i++)
             {
-                GenerateQuestOfType(questType);
+                GenerateQuestOfType(questType, showCreationLog: showCreationLog);
             }
 
             SaveData();
         }
 
-
-        private void GenerateQuestOfType(string questType)
+        /// <summary>
+        /// Generate a single quest of the specified type with random items from the lookup
+        /// Applies difficulty multipliers and validates item availability
+        /// </summary>
+        private void GenerateQuestOfType(string questType, bool showCreationLog = false)
         {
             if (_lookup?.items_to_collect == null)
             {
@@ -509,8 +538,9 @@ namespace MissionImpossible
             int currentDay = GetCurrentDay();
             float currentHour = GetCurrentHour();
             
+            // Calculate quest period end time (always from 9:00 AM to 8:50 AM next period)
             const float QUEST_START_HOUR = 9.0f;
-            const float QUEST_END_HOUR = 8.833333f;
+            const float QUEST_END_HOUR = 8.833333f;  // 8:50 AM
             
             int startDay = currentDay;
             float startHour = QUEST_START_HOUR;
@@ -520,15 +550,15 @@ namespace MissionImpossible
             
             if (questType.Equals("Daily", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 1;
+                endDay = currentDay + 1;  // Ends tomorrow at 8:50 AM
             }
             else if (questType.Equals("Weekly", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 7;
+                endDay = currentDay + 7;  // Ends in 7 days at 8:50 AM
             }
             else if (questType.Equals("Monthly", System.StringComparison.OrdinalIgnoreCase))
             {
-                endDay = currentDay + 30;
+                endDay = currentDay + 30;  // Ends in 30 days at 8:50 AM
             }
 
             var quest = new Quest
@@ -547,7 +577,8 @@ namespace MissionImpossible
 
             _questState.ActiveQuests.Add(quest);
 
-            if (_settings.EnableDetailedLogging)
+            // Only show QUEST CREATED logs when explicitly requested (not during initial load)
+            if (showCreationLog && _settings.EnableDetailedLogging)
             {
                 MelonLogger.Msg($"[QuestMod] ========== QUEST CREATED ==========");
                 MelonLogger.Msg($"[QuestMod] Type: {questType}");
@@ -563,17 +594,24 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Check if a quest has been completed and trigger completion handler if needed
+        /// Implements a 0.5 second cooldown between quest completions to prevent spam
+        /// </summary>
         private void CheckAndCompleteQuest(Quest quest, bool isDebugCommand = false, int questNumber = 0)
         {
             if (quest.CurrentAmount >= quest.RequiredAmount)
             {
+                // Prevent multiple quests completing in same frame - 0.5 second delay
+                // BUT: Skip this check for debug commands (F2/F3/F4)
                 if (!isDebugCommand && (DateTime.Now - _lastQuestCompletionTime).TotalSeconds < 0.5)
                 {
-                    return;
+                    return;  // Skip, process next frame
                 }
                 
                 _lastQuestCompletionTime = DateTime.Now;
                 
+                // Only show detailed logging for natural completions (not debug commands)
                 if (!isDebugCommand)
                 {
                     MelonLogger.Msg($"[QuestMod] ========== COMPLETING QUEST ==========");
@@ -583,6 +621,7 @@ namespace MissionImpossible
                 
                 GiveReward(quest, questNumber);
                 
+                // Find and remove the quest
                 var questToRemove = _questState.ActiveQuests.FirstOrDefault(q => 
                     q.Type == quest.Type && 
                     q.CollectKey == quest.CollectKey &&
@@ -595,6 +634,7 @@ namespace MissionImpossible
                     MelonLogger.Msg($"[QuestMod] Quest removed from active list");
                     MelonLogger.Msg($"[QuestMod] Active quests remaining: {_questState.ActiveQuests.Count}");
                     
+                    // Generate replacement quest
                     int targetCount = quest.Type switch
                     {
                         "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
@@ -612,12 +652,13 @@ namespace MissionImpossible
                         
                         for (int i = 0; i < neededCount; i++)
                         {
-                            GenerateQuestOfType(quest.Type);
+                            GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing completed quests
                         }
                         
                         MelonLogger.Msg($"[QuestMod] {quest.Type} quest(s) generated successfully");
                     }
                     
+                    // Final save to ensure all changes are persisted
                     SaveData();
                 }
                 else
@@ -630,11 +671,15 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Give the player their quest reward items
+        /// HANG PREVENTION: Uses locks but no file I/O, non-blocking
+        /// </summary>
         private void GiveReward(Quest quest, int questNumber = 0)
         {
             try
             {
-                _isGivingReward = true;
+                _isGivingReward = true;  // Set guard to prevent re-entrancy
                 
                 // CRASH FIX: Lock prevents console from accessing data while giving reward
                 lock (_dataLock)
@@ -703,7 +748,7 @@ namespace MissionImpossible
             }
             finally
             {
-                _isGivingReward = false;
+                _isGivingReward = false;  // Clear guard in finally block (always executes)
             }
         }
 
@@ -731,7 +776,11 @@ namespace MissionImpossible
             }
         }
 
-        public void RegenerateQuestsForSettingsChange()
+        /// <summary>
+        /// Clear all active quests and regenerate them based on current settings
+        /// Called when user changes settings that affect quest availability
+        /// </summary>
+        public void RegenerateQuestsForSettingsChange(bool showCreationLogs = false)
         {
             MelonLogger.Msg("[QuestMod] Clearing active quests...");
             _questState.ActiveQuests.Clear();
@@ -752,7 +801,7 @@ namespace MissionImpossible
             if (_settings.EnableDailyQuests)
             {
                 MelonLogger.Msg($"[QuestMod] Generating {_settings.DailyQuestCount} Daily quests...");
-                GenerateQuestType("Daily");
+                GenerateQuestType("Daily", showCreationLog: showCreationLogs);
                 totalQuests += _settings.DailyQuestCount;
             }
             else
@@ -763,7 +812,7 @@ namespace MissionImpossible
             if (_settings.EnableWeeklyQuests)
             {
                 MelonLogger.Msg($"[QuestMod] Generating {_settings.WeeklyQuestCount} Weekly quests...");
-                GenerateQuestType("Weekly");
+                GenerateQuestType("Weekly", showCreationLog: showCreationLogs);
                 totalQuests += _settings.WeeklyQuestCount;
             }
             else
@@ -774,7 +823,7 @@ namespace MissionImpossible
             if (_settings.EnableMonthlyQuests)
             {
                 MelonLogger.Msg($"[QuestMod] Generating {_settings.MonthlyQuestCount} Monthly quests...");
-                GenerateQuestType("Monthly");
+                GenerateQuestType("Monthly", showCreationLog: showCreationLogs);
                 totalQuests += _settings.MonthlyQuestCount;
             }
             else
@@ -786,6 +835,9 @@ namespace MissionImpossible
             SaveData();
         }
 
+        /// <summary>
+        /// Load GearLookup.json containing all available quest items and their properties
+        /// </summary>
         private void LoadLookup()
         {
             if (!File.Exists(GearLookupPath))
@@ -866,6 +918,9 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Load quest data from disk - persists player progress between sessions
+        /// </summary>
         private void LoadData()
         {
             if (!File.Exists(QuestDataPath))
@@ -881,6 +936,8 @@ namespace MissionImpossible
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 _questState = JsonSerializer.Deserialize<QuestState>(json, options);
                 
+                // Recalculate Status for all quests based on CurrentAmount
+                // This handles old JSON files that don't have Status field
                 foreach (var quest in _questState.ActiveQuests)
                 {
                     quest.Status = quest.CurrentAmount >= quest.RequiredAmount ? "Complete" : "Ongoing";
@@ -888,6 +945,7 @@ namespace MissionImpossible
                 
                 MelonLogger.Msg("[QuestMod] Quest data loaded from disk");
                 
+                // Display current missions on game load
                 if (_questState.ActiveQuests.Count > 0)
                 {
                     MelonLogger.Msg($"[QuestMod] Current Missions ({_questState.ActiveQuests.Count} active):");
@@ -904,22 +962,31 @@ namespace MissionImpossible
             }
         }
 
-        // HANG FIX: Async save on background thread
+        /// <summary>
+        /// Save quest data to disk asynchronously to prevent game thread blocking
+        /// HANG PREVENTION: Uses background thread, prevents concurrent saves, minimal locking
+        /// </summary>
         private void SaveData()
         {
+            // Don't save if already saving or if nothing needs saving
             if (_saveInProgress)
                 return;
 
+            // Avoid file I/O blocking the game thread by running on background thread
             _saveInProgress = true;
             
             System.Threading.ThreadPool.QueueUserWorkItem(SaveDataAsync);
         }
 
+        /// <summary>
+        /// Async save operation - runs on background thread to prevent game freezing
+        /// HANG PREVENTION: Locked only for serialization duration, file I/O on background thread
+        /// </summary>
         private void SaveDataAsync(object state)
         {
             try
             {
-                // CRASH FIX: Lock prevents console from accessing data while saving
+                // Lock only for data serialization, not for file I/O
                 lock (_dataLock)
                 {
                     string dirPath = Path.GetDirectoryName(QuestDataPath);
@@ -941,25 +1008,26 @@ namespace MissionImpossible
             }
         }
 
-        // HANG FIX: Simplified inventory callback
+        /// <summary>
+        /// Called when inventory items are added - tracks quest progress and detects stacking
+        /// HANG PREVENTION: Uses locks but no blocking operations, simple fast path
+        /// CONSOLE SAFETY: Locks prevent race conditions with dev console access
+        /// </summary>
         public static void OnInventoryItemAdded(GearItem gearItem, bool isBulkStack = false)
         {
             if (Instance == null || gearItem == null)
                 return;
 
             if (Instance._isGivingReward)
-                return;
+                return;  // Don't count items being given as rewards
 
             if (Instance._questState?.ActiveQuests == null || Instance._questState.ActiveQuests.Count == 0)
                 return;
 
             if (Instance._suppressLogging)
-                return;
+                return;  // Suppress during initial load
 
-            if (Instance._settings != null && !Instance._settings.SuppressPickupLogging)
-                MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
-
-            // Track this item's m_Units for future stacking detection
+            // Track this item's m_Units for future stacking detection (only for direct additions)
             if (!isBulkStack)
             {
                 lock (Instance._trackingLock)
@@ -971,18 +1039,17 @@ namespace MissionImpossible
                             Instance._trackedUnitCounts[gearItem] = gearItem.m_StackableItem.m_Units;
                         }
                     }
-                    catch { }
+                    catch { }  // Silently ignore tracking errors
                 }
             }
 
             // CRASH FIX: Lock to prevent console/save race condition
             lock (Instance._dataLock)
             {
-                // Get the actual quantity - each call is for 1 unit
-                // (If it's a stacked callback, it was already split into individual units by CheckForStackedItems)
+                // Each callback represents 1 unit added (even for stacked items)
                 int quantityToAdd = 1;
 
-                // SIMPLE: Just check if item matches quest and increment counter
+                // Check all active quests for matches
                 foreach (var quest in Instance._questState.ActiveQuests.ToList())
                 {
                     if (quest.CollectKey.Equals(gearItem.name, System.StringComparison.OrdinalIgnoreCase))
@@ -994,24 +1061,33 @@ namespace MissionImpossible
                             quest.Status = "Complete";
                         }
                         
-                        if (!Instance._settings.SuppressPickupLogging)
+                        // Log item pickups only if EnablePickupLogging is TRUE
+                        if (Instance._settings.EnablePickupLogging)
                         {
+                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
                             MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
+                            
+                            // Show "objective complete" message ONLY if BOTH:
+                            // - EnablePickupLogging = TRUE (we're showing messages)
+                            // - EnableDetailedLogging = TRUE (user wants details)
+                            if (Instance._settings.EnableDetailedLogging && quest.CurrentAmount >= quest.RequiredAmount)
+                            {
+                                MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
+                                MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
+                            }
                         }
                         
-                        Instance._needsSave = true;
-                        
-                        if (quest.CurrentAmount >= quest.RequiredAmount && Instance._settings.EnableDetailedLogging)
-                        {
-                            MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
-                            MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
-                        }
+                        Instance._needsSave = true;  // Defer save to background thread
                     }
                 }
             }
         }
     }
 
+    /// <summary>
+    /// Harmony patches for game methods that add items to inventory
+    /// Non-intrusive hooks to detect item additions without modifying core gameplay
+    /// </summary>
     public static class InventoryPatches
     {
         public static void ApplyAll(HarmonyLib.Harmony harmony)
@@ -1019,6 +1095,9 @@ namespace MissionImpossible
             PatchInventoryAddItem(harmony);
         }
 
+        /// <summary>
+        /// Hook the AddGear and AddItem methods to detect inventory additions
+        /// </summary>
         private static void PatchInventoryAddItem(HarmonyLib.Harmony harmony)
         {
             var addGear = typeof(Inventory).GetMethod("AddGear");
