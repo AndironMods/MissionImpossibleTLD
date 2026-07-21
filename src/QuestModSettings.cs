@@ -76,7 +76,7 @@ namespace MissionImpossible
         
         [Name("Enable Pickup Logging")]
         [Description("Log item pickup events")]
-        public bool EnablePickupLogging = false;
+        public bool EnablePickupLogging = true;
 
         private string _settingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

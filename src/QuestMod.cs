@@ -659,7 +659,7 @@ namespace MissionImpossible
                     }
                     
                     // Final save to ensure all changes are persisted
-                    SaveData();
+                    //SaveData();
                 }
                 else
                 {
@@ -1064,7 +1064,7 @@ namespace MissionImpossible
                         // Log item pickups only if EnablePickupLogging is TRUE
                         if (Instance._settings.EnablePickupLogging)
                         {
-                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
+                            MelonLogger.Msg($"[QuestMod] Quest Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
                             MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
                             
                             // Show "objective complete" message ONLY if BOTH:
