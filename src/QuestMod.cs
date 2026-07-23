@@ -53,7 +53,7 @@ namespace MissionImpossible
     {
         public static QuestMod Instance { get; private set; }
 
-        private QuestModSettings _settings;
+        public QuestModSettings _settings;
         private GearLookup _lookup;
         private QuestState _questState;
         private System.Random _random = new System.Random();
@@ -63,7 +63,7 @@ namespace MissionImpossible
         private DateTime _lastCheckTime;
         private DateTime _lastQuestCompletionTime = DateTime.MinValue;  // Delay between completions
         private bool _isGivingReward = false;  // Guard against re-entrancy in reward giving
-        private bool _modSettingsAvailable = false;
+        public bool _modSettingsAvailable = false;
 
         private bool _needsSave = false;  // Flag to defer saves from callbacks
         private bool _saveInProgress = false;  // Prevents concurrent save operations (hang prevention)
@@ -107,7 +107,6 @@ namespace MissionImpossible
             {
                 _settings = new QuestModSettings();
                 _settings.InitializeSettings();
-                MelonLogger.Msg("[QuestMod] Settings registered successfully!");
             }
             catch (Exception ex)
             {
@@ -119,6 +118,9 @@ namespace MissionImpossible
             LoadLookup();
             LoadData();
             InventoryPatches.ApplyAll(HarmonyInstance);
+            
+            // Initialize GUI system to display quests in Journal/Collections
+            new QuestModGUI();
 
             if (_questState == null)
             {
@@ -128,17 +130,11 @@ namespace MissionImpossible
             // Only regenerate if NO quests exist yet (first run)
             if (_questState.ActiveQuests.Count == 0)
             {
-                MelonLogger.Msg("[QuestMod] No quests found - generating initial quests...");
                 RegenerateQuestsForSettingsChange();
-            }
-            else
-            {
-                MelonLogger.Msg($"[QuestMod] Loaded {_questState.ActiveQuests.Count} existing quests from disk");
             }
 
             SaveData();
-            MelonLogger.Msg("[QuestMod] Initialization complete!");
-            MelonLogger.Msg($"[QuestMod] Difficulty: {_settings.GetDifficultyDescription()}");
+            MelonLogger.Msg($"[QuestMod] Initialized - {_questState.ActiveQuests.Count} quests active - Difficulty: {_settings.GetDifficultyDescription()}");
         }
 
         /// <summary>
@@ -325,6 +321,7 @@ namespace MissionImpossible
             }
         }
 
+
         /// <summary>
         /// Detect when stackable items are combined (m_Units increase) and fire individual callbacks
         /// This allows correct counting of stacked items like "5 Scrap Metal" added as 1 stack
@@ -417,9 +414,10 @@ namespace MissionImpossible
                             };
                             
                             int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
-                            for (int i = currentCount; i < targetCount; i++)
+                            int neededCount = targetCount - currentCount;
+                            if (neededCount > 0)
                             {
-                                GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing expired quests
+                                GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
                             }
                             
                             SaveData();
@@ -452,9 +450,10 @@ namespace MissionImpossible
                         };
                         
                         int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
-                        for (int i = currentCount; i < targetCount; i++)
+                        int neededCount = targetCount - currentCount;
+                        if (neededCount > 0)
                         {
-                            GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing quests
+                            GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
                         }
                     }
                 }
@@ -477,10 +476,7 @@ namespace MissionImpossible
                 _ => 0
             };
 
-            for (int i = 0; i < count; i++)
-            {
-                GenerateQuestOfType(questType, showCreationLog: showCreationLog);
-            }
+            GenerateQuestsAndNotify(questType, count, showCreationLog);
 
             SaveData();
         }
@@ -489,12 +485,12 @@ namespace MissionImpossible
         /// Generate a single quest of the specified type with random items from the lookup
         /// Applies difficulty multipliers and validates item availability
         /// </summary>
-        private void GenerateQuestOfType(string questType, bool showCreationLog = false)
+        private bool GenerateQuestOfType(string questType, bool showCreationLog = false)
         {
             if (_lookup?.items_to_collect == null)
             {
                 MelonLogger.Error($"[QuestMod] Cannot generate {questType} quest: items_to_collect is null!");
-                return;
+                return false;
             }
 
             List<string> allowedCategories = _settings.GetAllowedCategories();
@@ -512,7 +508,7 @@ namespace MissionImpossible
             if (validItems.Count == 0)
             {
                 MelonLogger.Error($"[QuestMod] No valid {questType} collection items found! Allowed categories: {string.Join(", ", allowedCategories)}");
-                return;
+                return false;
             }
 
             var collectItem = validItems[_random.Next(validItems.Count)];
@@ -525,7 +521,7 @@ namespace MissionImpossible
             if (rewardItems.Count == 0)
             {
                 MelonLogger.Error($"[QuestMod] No valid {questType} reward items found!");
-                return;
+                return false;
             }
 
             var rewardItem = rewardItems[_random.Next(rewardItems.Count)];
@@ -577,20 +573,25 @@ namespace MissionImpossible
 
             _questState.ActiveQuests.Add(quest);
 
-            // Only show QUEST CREATED logs when explicitly requested (not during initial load)
-            if (showCreationLog && _settings.EnableDetailedLogging)
+            return true;
+        }
+
+        /// <summary>
+        /// Generate one or more quests of a type and show a single HUD notification with the count.
+        /// Replaces the old per-quest console "QUEST CREATED" logging.
+        /// </summary>
+        private void GenerateQuestsAndNotify(string questType, int count, bool showCreationLog)
+        {
+            int successCount = 0;
+            for (int i = 0; i < count; i++)
             {
-                MelonLogger.Msg($"[QuestMod] ========== QUEST CREATED ==========");
-                MelonLogger.Msg($"[QuestMod] Type: {questType}");
-                MelonLogger.Msg($"[QuestMod] Difficulty: {_settings.GetDifficultyDescription()}");
-                MelonLogger.Msg($"[QuestMod] Objective: Collect {requiredAmount}x {collectItem.Key} ({collectVariant.spawn_name})");
-                MelonLogger.Msg($"[QuestMod] Category: {collectVariant.category}");
-                MelonLogger.Msg($"[QuestMod] Progress: 0/{requiredAmount}");
-                
-                string rewardDisplay = !_settings.ShowReward ? "***" : $"{rewardAmount}x {rewardItem.Key} ({rewardVariant.spawn_name})";
-                MelonLogger.Msg($"[QuestMod] Reward: {rewardDisplay}");
-                
-                MelonLogger.Msg($"[QuestMod] ===================================");
+                if (GenerateQuestOfType(questType, showCreationLog: showCreationLog))
+                    successCount++;
+            }
+
+            if (showCreationLog && successCount > 0)
+            {
+                HUDMessage.AddMessage($"{successCount} new {questType} Quests created", true);
             }
         }
 
@@ -611,14 +612,6 @@ namespace MissionImpossible
                 
                 _lastQuestCompletionTime = DateTime.Now;
                 
-                // Only show detailed logging for natural completions (not debug commands)
-                if (!isDebugCommand)
-                {
-                    MelonLogger.Msg($"[QuestMod] ========== COMPLETING QUEST ==========");
-                    MelonLogger.Msg($"[QuestMod] Type: {quest.Type}");
-                    MelonLogger.Msg($"[QuestMod] Collected: {quest.CurrentAmount}/{quest.RequiredAmount}");
-                }
-                
                 GiveReward(quest, questNumber);
                 
                 // Find and remove the quest
@@ -631,8 +624,6 @@ namespace MissionImpossible
                 if (questToRemove != null)
                 {
                     _questState.ActiveQuests.Remove(questToRemove);
-                    MelonLogger.Msg($"[QuestMod] Quest removed from active list");
-                    MelonLogger.Msg($"[QuestMod] Active quests remaining: {_questState.ActiveQuests.Count}");
                     
                     // Generate replacement quest
                     int targetCount = quest.Type switch
@@ -648,18 +639,11 @@ namespace MissionImpossible
                     
                     if (neededCount > 0)
                     {
-                        MelonLogger.Msg($"[QuestMod] {quest.Type}: {currentCount} active, {targetCount} target, generating {neededCount} quest(s)...");
-                        
-                        for (int i = 0; i < neededCount; i++)
-                        {
-                            GenerateQuestOfType(quest.Type, showCreationLog: true);  // Show logs when replacing completed quests
-                        }
-                        
-                        MelonLogger.Msg($"[QuestMod] {quest.Type} quest(s) generated successfully");
+                        GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
                     }
                     
                     // Final save to ensure all changes are persisted
-                    //SaveData();
+                    SaveData();
                 }
                 else
                 {
@@ -667,7 +651,6 @@ namespace MissionImpossible
                 }
                 
                 SaveData();
-                MelonLogger.Msg($"[QuestMod] =====================================");
             }
         }
 
@@ -692,6 +675,7 @@ namespace MissionImpossible
                     }
 
                     int successCount = 0;
+                    
                     for (int i = 0; i < quest.RewardAmount; i++)
                     {
                         GearItem rewardItem = GearItem.InstantiateGearItem(quest.RewardKey);
@@ -708,36 +692,18 @@ namespace MissionImpossible
 
                     string rewardDisplay = $"{successCount} {quest.RewardKey}";
                     
-                    if (_settings.EnableDetailedLogging)
+                    // Display reward notification using HUDMessage (works everywhere, indoor/outdoor)
+                    try
                     {
-                        MelonLogger.Msg($"[QuestMod] ========== QUEST COMPLETE ==========");
-                        MelonLogger.Msg($"[QuestMod] Type: {quest.Type}");
-                        MelonLogger.Msg($"[QuestMod] Difficulty: {_settings.GetDifficultyDescription()}");
-                        
-                        string itemDisplayName = quest.CollectKey;
-                        if (_lookup != null && _lookup.items_to_collect != null)
+                        if (successCount > 0)
                         {
-                            foreach (var category in _lookup.items_to_collect)
-                            {
-                                var item = category.Value.FirstOrDefault(x => x.spawn_name == quest.CollectKey);
-                                if (item != null)
-                                {
-                                    itemDisplayName = category.Key;
-                                    MelonLogger.Msg($"[QuestMod] Objective: Collect {quest.RequiredAmount}x {itemDisplayName} ({quest.CollectKey})");
-                                    MelonLogger.Msg($"[QuestMod] Category: {item.category}");
-                                    break;
-                                }
-                            }
+                            HUDMessage.AddMessage($"Quest Reward: {successCount}x {quest.RewardKey}", true);
+                            MelonLogger.Msg($"[QuestMod] Reward notification displayed: {successCount}x {quest.RewardKey}");
                         }
-                        
-                        if (itemDisplayName == quest.CollectKey)
-                        {
-                            MelonLogger.Msg($"[QuestMod] Objective: Collect {quest.RequiredAmount}x {quest.CollectKey}");
-                        }
-                        
-                        MelonLogger.Msg($"[QuestMod] Progress: {quest.CurrentAmount}/{quest.RequiredAmount}");
-                        MelonLogger.Msg($"[QuestMod] Reward: {rewardDisplay}");
-                        MelonLogger.Msg($"[QuestMod] ===================================");
+                    }
+                    catch (Exception displayEx)
+                    {
+                        MelonLogger.Msg($"[QuestMod] Note: Could not display reward notification (non-critical): {displayEx.Message}");
                     }
                 }
             }
@@ -1064,13 +1030,10 @@ namespace MissionImpossible
                         // Log item pickups only if EnablePickupLogging is TRUE
                         if (Instance._settings.EnablePickupLogging)
                         {
-                            MelonLogger.Msg($"[QuestMod] Quest Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
+                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
                             MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
                             
-                            // Show "objective complete" message ONLY if BOTH:
-                            // - EnablePickupLogging = TRUE (we're showing messages)
-                            // - EnableDetailedLogging = TRUE (user wants details)
-                            if (Instance._settings.EnableDetailedLogging && quest.CurrentAmount >= quest.RequiredAmount)
+                            if (quest.CurrentAmount >= quest.RequiredAmount)
                             {
                                 MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
                                 MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
@@ -1081,6 +1044,51 @@ namespace MissionImpossible
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Get a summary of quest progress for a given type (Daily/Weekly/Monthly).
+        /// Used by QuestModGUI to display live collection entry counts.
+        /// </summary>
+        public (int completed, int total, bool enabled) GetQuestSummary(string type)
+        {
+            if (_questState == null || _settings == null)
+                return (0, 0, false);
+
+            var quests = _questState.ActiveQuests.Where(q => q.Type == type).ToList();
+            int total = quests.Count;
+            int completed = quests.Count(q => q.Status == "Complete");
+
+            bool enabled = type switch
+            {
+                "Daily" => _settings.EnableDailyQuests,
+                "Weekly" => _settings.EnableWeeklyQuests,
+                "Monthly" => _settings.EnableMonthlyQuests,
+                _ => false
+            };
+
+            return (completed, total, enabled);
+        }
+
+        /// <summary>
+        /// Get the actual active Quest objects for a given type (Daily/Weekly/Monthly).
+        /// Used by QuestModGUI to build the detail panel objective list.
+        /// </summary>
+        public List<Quest> GetActiveQuestsOfType(string type)
+        {
+            if (_questState == null)
+                return new List<Quest>();
+
+            return _questState.ActiveQuests.Where(q => q.Type == type).ToList();
+        }
+
+        /// <summary>
+        /// Get the ShowReward setting from mod settings.
+        /// Used by QuestModGUI to determine if rewards should be visible or hidden as *****.
+        /// </summary>
+        public bool GetShowRewardSetting()
+        {
+            return _settings?.ShowReward ?? false;
         }
     }
 

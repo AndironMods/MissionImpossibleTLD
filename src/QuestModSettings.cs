@@ -8,14 +8,38 @@ using MelonLoader;
 
 namespace MissionImpossible
 {
-    public enum DifficultyLevel { Easy = 0, Normal = 1, Hard = 2 }
+    /// <summary>
+    /// Custom attribute to override how enum values are displayed in the settings menu
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field)]
+    public class DisplayNameAttribute : Attribute
+    {
+        public string DisplayName { get; set; }
+
+        public DisplayNameAttribute(string displayName)
+        {
+            DisplayName = displayName;
+        }
+    }
+
+    public enum DifficultyLevel
+    {
+        [DisplayName("Pilgrim")]
+        Pilgrim = 0,
+        
+        [DisplayName("Stalker and Voyager")]
+        Stalker_Voyager = 1,
+        
+        [DisplayName("Interloper and Misery")]
+        Interloper_Misery = 2
+    }
 
     public class QuestModSettings : ModSettingsBase
     {
         // ==================== DIFFICULTY SETTINGS ====================
         [Name("Difficulty Level")]
-        [Description("Easy (0.5x required), Normal (1.0x), Hard (2.0x required)")]
-        public DifficultyLevel DifficultyLevel = DifficultyLevel.Normal;
+        [Description("Pilgrim (0.5x required), Stalker and Voyager (1.0x), Interloper and Misery (2.0x required)")]
+        public DifficultyLevel DifficultyLevel = DifficultyLevel.Stalker_Voyager;
         
         // ==================== DAILY QUEST SETTINGS ====================
         [Name("Daily Quest Count")]
@@ -70,28 +94,35 @@ namespace MissionImpossible
         [Description("Show reward amounts in console log (hide *** if disabled)")]
         public bool ShowReward = false;
         
-        [Name("Enable Detailed Logging")]
-        [Description("Log detailed quest information")]
-        public bool EnableDetailedLogging = true;
-        
         [Name("Enable Pickup Logging")]
         [Description("Log item pickup events")]
-        public bool EnablePickupLogging = true;
+        public bool EnablePickupLogging = false;
 
         private string _settingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "TheLongDark", "Mods", "MissionImpossible", "QuestModSettings.json"
         );
 
+        // ==================== UTILITY METHODS ====================
+        /// <summary>
+        /// Get the display name of an enum value using the DisplayNameAttribute
+        /// </summary>
+        public static string GetEnumDisplayName(Enum value)
+        {
+            var fieldInfo = value.GetType().GetField(value.ToString());
+            if (fieldInfo == null)
+                return value.ToString();
+
+            var attribute = fieldInfo.GetCustomAttribute<DisplayNameAttribute>();
+            return attribute?.DisplayName ?? value.ToString();
+        }
+
         // ==================== INITIALIZATION ====================
         public void InitializeSettings()
         {
             AddToModSettings("Mission Impossible");
             LoadSettingsFromDisk();
-            
-            // Always save settings (creates file if it doesn't exist)
             SaveSettingsToDisk();
-	    LoadSettingsFromDisk();
         }
 
         // ==================== SETTINGS PERSISTENCE ====================
@@ -156,9 +187,6 @@ namespace MissionImpossible
                     if (root.TryGetProperty("ShowReward", out var showRewardValue))
                         ShowReward = showRewardValue.GetBoolean();
 
-                    if (root.TryGetProperty("EnableDetailedLogging", out var loggingValue))
-                        EnableDetailedLogging = loggingValue.GetBoolean();
-
                     if (root.TryGetProperty("EnablePickupLogging", out var enablePickupValue))
                         EnablePickupLogging = enablePickupValue.GetBoolean();
                 }
@@ -190,7 +218,6 @@ namespace MissionImpossible
                     { nameof(AllowAmmunition), AllowAmmunition },
                     { nameof(AllowResources), AllowResources },
                     { nameof(ShowReward), ShowReward },
-                    { nameof(EnableDetailedLogging), EnableDetailedLogging },
                     { nameof(EnablePickupLogging), EnablePickupLogging }
                 };
 
@@ -216,9 +243,9 @@ namespace MissionImpossible
         {
             return DifficultyLevel switch
             {
-                DifficultyLevel.Easy => Math.Max(1, (int)(baseRequired * 0.5f)),
-                DifficultyLevel.Normal => baseRequired,
-                DifficultyLevel.Hard => baseRequired * 2,
+                DifficultyLevel.Pilgrim => Math.Max(1, (int)(baseRequired * 0.5f)),
+                DifficultyLevel.Stalker_Voyager => baseRequired,
+                DifficultyLevel.Interloper_Misery => baseRequired * 2,
                 _ => baseRequired
             };
         }
@@ -230,9 +257,9 @@ namespace MissionImpossible
         {
             return DifficultyLevel switch
             {
-                DifficultyLevel.Easy => baseReward,
-                DifficultyLevel.Normal => baseReward,
-                DifficultyLevel.Hard => Math.Max(1, (int)(baseReward * 1.5f)),
+                DifficultyLevel.Pilgrim => baseReward,
+                DifficultyLevel.Stalker_Voyager => baseReward,
+                DifficultyLevel.Interloper_Misery => Math.Max(1, (int)(baseReward * 1.5f)),
                 _ => baseReward
             };
         }
@@ -244,9 +271,9 @@ namespace MissionImpossible
         {
             return DifficultyLevel switch
             {
-                DifficultyLevel.Easy => "Easy (0.5x required)",
-                DifficultyLevel.Normal => "Normal (1.0x)",
-                DifficultyLevel.Hard => "Hard (2.0x required)",
+                DifficultyLevel.Pilgrim => "Pilgrim (0.5x required)",
+                DifficultyLevel.Stalker_Voyager => "Stalker and Voyager (1.0x)",
+                DifficultyLevel.Interloper_Misery => "Interloper and Misery (2.0x required)",
                 _ => "Unknown"
             };
         }
@@ -276,7 +303,7 @@ namespace MissionImpossible
             MelonLogger.Msg($"[QuestModSettings] Daily Quests: {DailyQuestCount} (Enabled: {EnableDailyQuests})");
             MelonLogger.Msg($"[QuestModSettings] Weekly Quests: {WeeklyQuestCount} (Enabled: {EnableWeeklyQuests})");
             MelonLogger.Msg($"[QuestModSettings] Monthly Quests: {MonthlyQuestCount} (Enabled: {EnableMonthlyQuests})");
-            MelonLogger.Msg($"[QuestModSettings] Difficulty: {DifficultyLevel}");
+            MelonLogger.Msg($"[QuestModSettings] Difficulty: {GetDifficultyDescription()}");
             
             // Save settings to disk
             SaveSettingsToDisk();
@@ -297,7 +324,7 @@ namespace MissionImpossible
             }
             
             MelonLogger.Msg("[QuestModSettings] Settings confirmed and applied");
-            MelonLogger.Msg("[QuestModSettings] =============================================");
+            //MelonLogger.Msg("[QuestModSettings] =============================================");
         }
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
