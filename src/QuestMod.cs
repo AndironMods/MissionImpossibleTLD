@@ -1031,37 +1031,53 @@ namespace MissionImpossible
             // CRASH FIX: Lock to prevent console/save race condition
             lock (Instance._dataLock)
             {
-                // Each callback represents 1 unit added (even for stacked items)
-                int quantityToAdd = 1;
-
-                // Check all active quests for matches
-                foreach (var quest in Instance._questState.ActiveQuests.ToList())
+                try
                 {
-                    if (quest.CollectKey.Equals(gearItem.name, System.StringComparison.OrdinalIgnoreCase))
+                    // Each callback represents 1 unit added (even for stacked items)
+                    int quantityToAdd = 1;
+
+                    // Check all active quests for matches
+                    foreach (var quest in Instance._questState.ActiveQuests.ToList())
                     {
-                        quest.CurrentAmount += quantityToAdd;
-                        
-                        // Log item pickups only if EnablePickupLogging is TRUE
-                        if (Instance._settings.EnablePickupLogging)
+                        if (quest.CollectKey.Equals(gearItem.name, System.StringComparison.OrdinalIgnoreCase))
                         {
-                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "" : "")}");
-                            MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
-                        }
-                        
-                        // Check if quest is now complete and show notification
-                        if (quest.CurrentAmount >= quest.RequiredAmount)
-                        {
-                            Instance.CheckAndCompleteQuest(quest, isDebugCommand: false);
+                            quest.CurrentAmount += quantityToAdd;
                             
+                            // Log item pickups only if EnablePickupLogging is TRUE
                             if (Instance._settings.EnablePickupLogging)
                             {
-                                MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
-                                MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
+                                MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
+                                MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
                             }
+                            
+                            // Check if quest is now complete and show notification
+                            if (quest.CurrentAmount >= quest.RequiredAmount)
+                            {
+                                try
+                                {
+                                    Instance.CheckAndCompleteQuest(quest, isDebugCommand: false);
+                                }
+                                catch (Exception ex)
+                                {
+                                    MelonLogger.Error($"[QuestMod] Error in CheckAndCompleteQuest: {ex.Message}");
+                                    MelonLogger.Error($"[QuestMod] Stack trace: {ex.StackTrace}");
+                                }
+                                
+                                if (Instance._settings.EnablePickupLogging)
+                                {
+                                    MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
+                                    MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
+                                }
+                            }
+                            
+                            Instance._needsSave = true;  // Defer save to background thread
                         }
-                        
-                        Instance._needsSave = true;  // Defer save to background thread
                     }
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Error($"[QuestMod] Error in OnInventoryItemAdded: {ex.Message}");
+                    MelonLogger.Error($"[QuestMod] Stack trace: {ex.StackTrace}");
                 }
             }
         }
