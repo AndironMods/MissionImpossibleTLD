@@ -67,7 +67,7 @@ jobs:
     - name: Publish GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: master
+        tag_name: ${{ github.sha }}
         name: MissionImpossibleTLD
         files: MissionImpossibleTLD.zip
       env:
