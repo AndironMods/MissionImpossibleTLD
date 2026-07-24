@@ -38,7 +38,7 @@ namespace MissionImpossible
     {
         // ==================== DIFFICULTY SETTINGS ====================
         [Name("Difficulty Level")]
-        [Description("Pilgrim (0.5x required), Stalker and Voyager (1.0x), Interloper and Misery (2.0x required)")]
+        [Description("Pilgrim (0.5x required), Stalker/Voyager (1.0x), Interloper/Misery (2.0x required)")]
         public DifficultyLevel DifficultyLevel = DifficultyLevel.Stalker_Voyager;
         
         // ==================== DAILY QUEST SETTINGS ====================
@@ -122,7 +122,28 @@ namespace MissionImpossible
         {
             AddToModSettings("Mission Impossible");
             LoadSettingsFromDisk();
+            ValidateConfiguration();
             SaveSettingsToDisk();
+        }
+
+        /// <summary>
+        /// Validate that configuration is in a valid state.
+        /// At least one quest type must be enabled.
+        /// </summary>
+        public void ValidateConfiguration()
+        {
+            bool anyQuestEnabled = EnableDailyQuests || EnableWeeklyQuests || EnableMonthlyQuests;
+
+            if (!anyQuestEnabled)
+            {
+                MelonLogger.Warning("[QuestModSettings] CONFIGURATION ERROR: All quest types are disabled!");
+                MelonLogger.Warning("[QuestModSettings] At least one quest type must be enabled (Daily, Weekly, or Monthly).");
+                MelonLogger.Warning("[QuestModSettings] Enabling Daily Quests as default...");
+                
+                // Auto-fix: enable Daily Quests
+                EnableDailyQuests = true;
+                SaveSettingsToDisk();
+            }
         }
 
         // ==================== SETTINGS PERSISTENCE ====================

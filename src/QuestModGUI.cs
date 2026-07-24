@@ -10,12 +10,10 @@ namespace MissionImpossible
     /// <summary>
     /// Quest GUI integration into the Journal/Collections system.
     /// 
-    /// STRATEGY (Temporary): Replace collection list slots 0-2 (Notes, Transmitters, Recipes)
+    /// TESTING: Replace collection list slots 0-2 (Notes, Transmitters, Recipes)
     /// with Daily/Weekly/Monthly quests. This avoids navigation bounds issues entirely — indices
     /// 0-2 are always accessible and their click handlers work out of the box.
     /// 
-    /// Once all features (selection, highlighting, detail panel) are verified working,
-    /// we can reorder entries properly to append after Surveyed Locations (slots 8-10).
     /// </summary>
     public class QuestModGUI
     {

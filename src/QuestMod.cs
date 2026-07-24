@@ -73,6 +73,7 @@ namespace MissionImpossible
         private Dictionary<GearItem, int> _trackedUnitCounts = new Dictionary<GearItem, int>();
         private object _trackingLock = new object();
         private DateTime _lastStackCheckTime = DateTime.Now;
+        private DateTime _lastValidationCheckTime = DateTime.Now;
 
         private TimeOfDay TOD => GameManager.GetTimeOfDayComponent();
         private float CurrentHour => TOD.GetHoursPlayedNotPaused() % 24f;
@@ -253,7 +254,6 @@ namespace MissionImpossible
                     foreach (var quest in dailyQuests)
                     {
                         quest.CurrentAmount = quest.RequiredAmount;
-                        quest.Status = "Complete";
                         CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
                         questNumber++;
                     }
@@ -272,7 +272,6 @@ namespace MissionImpossible
                     foreach (var quest in weeklyQuests)
                     {
                         quest.CurrentAmount = quest.RequiredAmount;
-                        quest.Status = "Complete";
                         CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
                         questNumber++;
                     }
@@ -291,7 +290,6 @@ namespace MissionImpossible
                     foreach (var quest in monthlyQuests)
                     {
                         quest.CurrentAmount = quest.RequiredAmount;
-                        quest.Status = "Complete";
                         CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
                         questNumber++;
                     }
@@ -311,6 +309,14 @@ namespace MissionImpossible
             {
                 CheckForStackedItems();
                 _lastStackCheckTime = DateTime.Now;
+            }
+
+            // Periodic configuration validation (every 30 seconds)
+            // Ensures at least one quest type remains enabled
+            if ((DateTime.Now - _lastValidationCheckTime).TotalSeconds > 30 && _modSettingsAvailable)
+            {
+                _settings.ValidateConfiguration();
+                _lastValidationCheckTime = DateTime.Now;
             }
             
             // Deferred save - prevents blocking the game thread with file I/O
@@ -599,9 +605,12 @@ namespace MissionImpossible
         /// Check if a quest has been completed and trigger completion handler if needed
         /// Implements a 0.5 second cooldown between quest completions to prevent spam
         /// </summary>
-        private void CheckAndCompleteQuest(Quest quest, bool isDebugCommand = false, int questNumber = 0)
+        public void CheckAndCompleteQuest(Quest quest, bool isDebugCommand = false, int questNumber = 0)
         {
-            if (quest.CurrentAmount >= quest.RequiredAmount)
+            // For debug commands: process regardless of status. For normal gameplay: skip if already Complete
+            bool shouldProcess = isDebugCommand || (quest.CurrentAmount >= quest.RequiredAmount && quest.Status != "Complete");
+            
+            if (shouldProcess)
             {
                 // Prevent multiple quests completing in same frame - 0.5 second delay
                 // BUT: Skip this check for debug commands (F2/F3/F4)
@@ -612,44 +621,54 @@ namespace MissionImpossible
                 
                 _lastQuestCompletionTime = DateTime.Now;
                 
-                GiveReward(quest, questNumber);
-                
-                // Find and remove the quest
-                var questToRemove = _questState.ActiveQuests.FirstOrDefault(q => 
-                    q.Type == quest.Type && 
-                    q.CollectKey == quest.CollectKey &&
-                    q.RequiredAmount == quest.RequiredAmount
-                );
-                
-                if (questToRemove != null)
+                // Get target count for this quest type
+                int targetCount = quest.Type switch
                 {
-                    _questState.ActiveQuests.Remove(questToRemove);
+                    "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
+                    "Weekly" => _settings.EnableWeeklyQuests ? _settings.WeeklyQuestCount : 0,
+                    "Monthly" => _settings.EnableMonthlyQuests ? _settings.MonthlyQuestCount : 0,
+                    _ => 0
+                };
+
+                // Calculate progress: how many completed vs target
+                int completedCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type && q.Status == "Complete") + 1;
+
+                // Display objective completion notification with progress
+                try
+                {
+                    HUDMessage.AddMessage($"{completedCount}/{targetCount} {quest.Type} Quest completed!", true);
+                }
+                catch (Exception displayEx)
+                {
+                    MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {displayEx.Message}");
+                }
+                
+                // Mark quest as completed (keep in list, don't remove)
+                quest.Status = "Complete";
+                
+                // For debug commands: immediately give reward and generate replacement quests
+                if (isDebugCommand)
+                {
+                    GiveReward(quest, questNumber);
                     
-                    // Generate replacement quest
-                    int targetCount = quest.Type switch
+                    // Remove completed quest and generate new one
+                    var questToRemove = _questState.ActiveQuests.FirstOrDefault(q => 
+                        q.Type == quest.Type && 
+                        q.CollectKey == quest.CollectKey &&
+                        q.RequiredAmount == quest.RequiredAmount &&
+                        q.Status == "Complete"
+                    );
+                    
+                    if (questToRemove != null)
                     {
-                        "Daily" => _settings.EnableDailyQuests ? _settings.DailyQuestCount : 0,
-                        "Weekly" => _settings.EnableWeeklyQuests ? _settings.WeeklyQuestCount : 0,
-                        "Monthly" => _settings.EnableMonthlyQuests ? _settings.MonthlyQuestCount : 0,
-                        _ => 0
-                    };
-                    
-                    int currentCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type);
-                    int neededCount = targetCount - currentCount;
-                    
-                    if (neededCount > 0)
-                    {
-                        GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
+                        _questState.ActiveQuests.Remove(questToRemove);
+                        
+                        // Generate replacement quest
+                        GenerateQuestsAndNotify(quest.Type, 1, showCreationLog: false);
                     }
-                    
-                    // Final save to ensure all changes are persisted
-                    SaveData();
-                }
-                else
-                {
-                    MelonLogger.Error($"[QuestMod] Failed to find quest to remove!");
                 }
                 
+                // Save progress to file
                 SaveData();
             }
         }
@@ -1022,18 +1041,19 @@ namespace MissionImpossible
                     {
                         quest.CurrentAmount += quantityToAdd;
                         
-                        if (quest.CurrentAmount >= quest.RequiredAmount)
-                        {
-                            quest.Status = "Complete";
-                        }
-                        
                         // Log item pickups only if EnablePickupLogging is TRUE
                         if (Instance._settings.EnablePickupLogging)
                         {
-                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
+                            MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "" : "")}");
                             MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
+                        }
+                        
+                        // Check if quest is now complete and show notification
+                        if (quest.CurrentAmount >= quest.RequiredAmount)
+                        {
+                            Instance.CheckAndCompleteQuest(quest, isDebugCommand: false);
                             
-                            if (quest.CurrentAmount >= quest.RequiredAmount)
+                            if (Instance._settings.EnablePickupLogging)
                             {
                                 MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
                                 MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
