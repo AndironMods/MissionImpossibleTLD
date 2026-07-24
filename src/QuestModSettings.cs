@@ -9,7 +9,7 @@ using MelonLoader;
 namespace MissionImpossible
 {
     /// <summary>
-    /// Custom attribute to override how enum values are displayed in the settings menu
+    /// Custom attribute to override how enum values are displayed in the settings menu.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class DisplayNameAttribute : Attribute

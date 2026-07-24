@@ -1046,7 +1046,7 @@ namespace MissionImpossible
                             // Log item pickups only if EnablePickupLogging is TRUE
                             if (Instance._settings.EnablePickupLogging)
                             {
-                                MelonLogger.Msg($"[QuestMod] Item added to inventory: '{gearItem.name}' {(isBulkStack ? "[STACKED]" : "")}");
+                                MelonLogger.Msg($"[QuestMod] Quest Item added to inventory: '{gearItem.name}'");
                                 MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {quest.CollectKey} - {quest.CurrentAmount}/{quest.RequiredAmount} (+{quantityToAdd})");
                             }
                             

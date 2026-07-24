@@ -10,7 +10,7 @@ namespace MissionImpossible
     /// <summary>
     /// Quest GUI integration into the Journal/Collections system.
     /// 
-    /// TESTING: Replace collection list slots 0-2 (Notes, Transmitters, Recipes)
+    /// FOR TESTING: Replace collection list slots 0-2 (Notes, Transmitters, Recipes)
     /// with Daily/Weekly/Monthly quests. This avoids navigation bounds issues entirely — indices
     /// 0-2 are always accessible and their click handlers work out of the box.
     /// 
