@@ -9,7 +9,7 @@ Instead of just wandering and surviving aimlessly, you now have a reason to sear
 
 ## How It Works
 
-### Every Day at 9 AM, You Get New Quests:
+### You Get New Quests:
 
 1. **Daily Quest** - "Collect 6 sticks before tomorrow 9 AM"
 2. **Weekly Quest** - "Collect 8 scrap metal by next week"  
