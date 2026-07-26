@@ -20,6 +20,10 @@ namespace MissionImpossible
         private static readonly Dictionary<string, CollectionListItem> _cachedEntries = new Dictionary<string, CollectionListItem>();
         private static Transform _cachedGrandparent = null;
 
+        private static bool _offsetsCompressed = false;
+        private static Vector2 _originalOffsetOneAway;
+        private static Vector2 _originalOffsetOthers;
+
         public QuestModGUI()
         {
             ApplyHarmonyPatches();
@@ -49,6 +53,7 @@ namespace MissionImpossible
                 var buildCollectionsMethod = AccessTools.Method(typeof(Panel_Log), "BuildCollectionsList");
                 if (buildCollectionsMethod != null)
                 {
+                    harmony.Patch(buildCollectionsMethod, prefix: new HarmonyMethod(typeof(QuestModGUI), nameof(Prefix_BuildCollectionsList)));
                     harmony.Patch(buildCollectionsMethod, postfix: new HarmonyMethod(typeof(QuestModGUI), nameof(Postfix_BuildCollectionsList)));
                     patchedCount++;
                 }
@@ -63,7 +68,7 @@ namespace MissionImpossible
                 var panelLogLateUpdateMethod = AccessTools.Method(typeof(Panel_Log), "LateUpdate");
                 if (panelLogLateUpdateMethod != null)
                 {
-                    harmony.Patch(panelLogLateUpdateMethod, postfix: new HarmonyMethod(typeof(QuestModGUI), nameof(Postfix_Panel_Log_Update)));
+                    harmony.Patch(panelLogLateUpdateMethod, postfix: new HarmonyMethod(typeof(QuestModGUI), nameof(Postfix_Panel_Log_LateUpdate)));
                     patchedCount++;
                 }
 
@@ -123,6 +128,18 @@ namespace MissionImpossible
             _panelLog = __instance;
         }
 
+        private static bool IsOnCollectionsScreen(Panel_Log panelLog)
+        {
+            try
+            {
+                return panelLog.IsInCollectionsSelectScreen();
+            }
+            catch
+            {
+                return panelLog.m_CollectionList != null && panelLog.m_CollectionList.Count > 0;
+            }
+        }
+
         private static Panel_Log _lastKnownPanelLogInstance = null;
 
         private static void Postfix_Panel_Log_Initialize(Panel_Log __instance)
@@ -138,6 +155,60 @@ namespace MissionImpossible
             }
         }
 
+        /// <summary>
+        /// Compresses the native ScrollList's row spacing to QUEST_ROW_SCALE, caching the
+        /// original values the first time it's called. Used both before native row layout
+        /// (Prefix_BuildCollectionsList) and whenever quest rows are repositioned, since the
+        /// scroll list may reset these on its own.
+        /// </summary>
+        private static void CompressScrollListOffsets(ScrollList scrollList)
+        {
+            if (!_offsetsCompressed)
+            {
+                _originalOffsetOneAway = scrollList.m_OffsetOneAway;
+                _originalOffsetOthers = scrollList.m_OffsetOthers;
+                _offsetsCompressed = true;
+            }
+
+            scrollList.m_OffsetOneAway = _originalOffsetOneAway * QUEST_ROW_SCALE;
+            scrollList.m_OffsetOthers = _originalOffsetOthers * QUEST_ROW_SCALE;
+
+            try
+            {
+                scrollList.CreateOffsetVectors();
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// CRITICAL: Runs BEFORE native BuildCollectionsList lays out native rows 0-7.
+        /// Without this, native rows get positioned using ORIGINAL (uncompressed) spacing
+        /// on the very first build, while our quest rows always assume COMPRESSED spacing -
+        /// causing a mismatch/overlap that only fixes itself once the list rebuilds again
+        /// (e.g. on second visit, when the offset is already compressed from before).
+        /// </summary>
+        private static void Prefix_BuildCollectionsList(Panel_Log __instance)
+        {
+            if (__instance == null || QuestMod.Instance == null || !QuestMod.Instance._modSettingsAvailable)
+                return;
+
+            try
+            {
+                var scrollList = __instance.m_CollectionsScrollList;
+                if (scrollList == null)
+                    return;
+
+                CompressScrollListOffsets(scrollList);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[QuestModGUI] Error in Prefix_BuildCollectionsList: {ex.Message}");
+            }
+        }
+
         private static void Postfix_BuildCollectionsList(Panel_Log __instance)
         {
             if (__instance == null || QuestMod.Instance == null || !QuestMod.Instance._modSettingsAvailable)
@@ -146,6 +217,7 @@ namespace MissionImpossible
             try
             {
                 EnsureQuestEntries(__instance);
+                ResizeAndRepositionAllEntries(__instance);
             }
             catch (Exception ex)
             {
@@ -160,23 +232,12 @@ namespace MissionImpossible
 
             try
             {
-                bool onCollectionsScreen;
-                try
-                {
-                    onCollectionsScreen = __instance.IsInCollectionsSelectScreen();
-                }
-                catch
-                {
-                    onCollectionsScreen = __instance.m_CollectionList != null && __instance.m_CollectionList.Count > 0;
-                }
-
-                if (!onCollectionsScreen)
+                if (!IsOnCollectionsScreen(__instance))
                     return;
 
+                // Just ensure entries exist, don't position yet
                 EnsureQuestEntries(__instance);
                 ApplyQuestDetailOverrideIfNeeded(__instance);
-
-
             }
             catch (Exception ex)
             {
@@ -184,14 +245,35 @@ namespace MissionImpossible
             }
         }
 
+        private static void Postfix_Panel_Log_LateUpdate(Panel_Log __instance)
+        {
+            if (__instance == null || QuestMod.Instance == null || !QuestMod.Instance._modSettingsAvailable)
+                return;
+
+            try
+            {
+                if (!IsOnCollectionsScreen(__instance))
+                    return;
+
+                ApplyQuestDetailOverrideIfNeeded(__instance);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error($"[QuestModGUI] Error in Postfix_Panel_Log_LateUpdate: {ex.Message}");
+            }
+        }
+
         private static void Postfix_ScrollList_Update(ScrollList __instance)
         {
-
             if (_panelLog == null || __instance == null || QuestMod.Instance == null || !QuestMod.Instance._modSettingsAvailable)
                 return;
 
             try
             {
+                if (!IsOnCollectionsScreen(_panelLog))
+                    return;
+
+                EnsureQuestEntries(_panelLog);
                 ResizeAndRepositionAllEntries(_panelLog);
             }
             catch (Exception ex)
@@ -226,15 +308,6 @@ namespace MissionImpossible
                 {
                     MelonLogger.Error($"[QuestModGUI] Error ensuring quest entry for {type}: {ex.Message}");
                 }
-            }
-
-            try
-            {
-                ResizeAndRepositionAllEntries(panelLog);
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestModGUI] Error resizing/repositioning entries: {ex.Message}");
             }
         }
 
@@ -322,6 +395,17 @@ namespace MissionImpossible
                 clone.name = $"QuestEntry_{type}";
                 clone.transform.SetAsLastSibling();
 
+                // CRITICAL: Position immediately - clone starts at template's position (0,0,0)
+                // which overlaps the Notes row. Without this, the clone can render for
+                // a frame at (0,0,0) before ResizeAndRepositionAllEntries() runs, causing
+                // a visible flash/overlap on the very first creation (not on cache reuse).
+                int questTypeIndex = Array.IndexOf(QuestTypes, type);
+                if (questTypeIndex >= 0)
+                {
+                    float initialOffset = FIXED_QUEST_SPACING * (questTypeIndex + 1);
+                    clone.transform.localPosition = new Vector3(0f, FIXED_QUEST_ANCHOR_Y - initialOffset, 0f);
+                }
+
                 var cloneComp = clone.GetComponent<CollectionListItem>();
                 if (cloneComp == null)
                 {
@@ -365,10 +449,6 @@ namespace MissionImpossible
             }
         }
 
-        private static bool _offsetsCompressed = false;
-        private static Vector2 _originalOffsetOneAway;
-        private static Vector2 _originalOffsetOthers;
-
         private static void ResizeAndRepositionAllEntries(Panel_Log panelLog)
         {
             if (panelLog.m_CollectionList == null || panelLog.m_CollectionList.Count < 1)
@@ -380,24 +460,7 @@ namespace MissionImpossible
                 if (scrollList == null)
                     return;
 
-                if (!_offsetsCompressed)
-                {
-                    _originalOffsetOneAway = scrollList.m_OffsetOneAway;
-                    _originalOffsetOthers = scrollList.m_OffsetOthers;
-                    _offsetsCompressed = true;
-                }
-
-                scrollList.m_OffsetOneAway = _originalOffsetOneAway * QUEST_ROW_SCALE;
-                scrollList.m_OffsetOthers = _originalOffsetOthers * QUEST_ROW_SCALE;
-
-                try
-                {
-                    scrollList.CreateOffsetVectors();
-                }
-                catch (Exception ex)
-                {
-                    MelonLogger.Error($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
-                }
+                CompressScrollListOffsets(scrollList);
 
                 Vector3? nativeScale = panelLog.m_CollectionList[0]?.transform?.localScale;
                 Vector3 anchorPos = new Vector3(0f, FIXED_QUEST_ANCHOR_Y, 0f);
