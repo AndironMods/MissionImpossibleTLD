@@ -83,8 +83,7 @@ namespace MissionImpossible
             Path.Combine(Directory.GetCurrentDirectory(), "Mods", "GearLookup.json");
 
         private string QuestDataPath =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "TheLongDark", "Mods", "MissionImpossible", "QuestData.json");
+            Path.Combine(MelonLoader.Utils.MelonEnvironment.ModsDirectory, "QuestModData.json");
 
         /// <summary>
         /// Initialize the mod - load settings, quests, and set up inventory monitoring
@@ -399,16 +398,15 @@ namespace MissionImpossible
 
                 foreach (var quest in _questState.ActiveQuests.ToList())
                 {
-                    // Check if quest objective is complete and period has ended - give reward
-                    if (quest.CurrentAmount >= quest.RequiredAmount)
+                    // If quest objective is complete, handle period end
+                    if (quest.CurrentAmount >= quest.RequiredAmount && quest.Status == "Complete")
                     {
                         bool periodEnded = (day > quest.EndDay) || 
                                            (day == quest.EndDay && hour >= quest.EndHour);
                         
                         if (periodEnded)
                         {
-                            GiveReward(quest);
-                            
+                            // Reward already given when quest was marked Complete - just remove and regenerate
                             _questState.ActiveQuests.Remove(quest);
                             
                             // Generate replacement
@@ -428,8 +426,10 @@ namespace MissionImpossible
                             }
                             
                             SaveData();
-                            continue;
                         }
+                        
+                        // Quest is complete - don't process further resets for this quest
+                        continue;
                     }
                     
                     bool shouldReset = false;
@@ -647,11 +647,12 @@ namespace MissionImpossible
                 // Mark quest as completed (keep in list, don't remove)
                 quest.Status = "Complete";
                 
-                // For debug commands: immediately give reward and generate replacement quests
+                // IMMEDIATELY GIVE REWARD when quest is completed (not waiting for period to end)
+                GiveReward(quest, questNumber);
+                
+                // For debug commands: also generate replacement quests
                 if (isDebugCommand)
                 {
-                    GiveReward(quest, questNumber);
-                    
                     // Remove completed quest and generate new one
                     var questToRemove = _questState.ActiveQuests.FirstOrDefault(q => 
                         q.Type == quest.Type && 
@@ -1067,7 +1068,7 @@ namespace MissionImpossible
                                 if (Instance._settings.EnablePickupLogging)
                                 {
                                     MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete!");
-                                    MelonLogger.Msg($"[QuestMod] {quest.Type} Period must end before reward is given.");
+                                    MelonLogger.Msg($"[QuestMod] Reward given immediately!");
                                 }
                             }
                             
