@@ -114,7 +114,7 @@ namespace MissionImpossible
             string settingsFile = "QuestModSettings.json";
             string fullPath = Path.Combine(modsDirectory, settingsFile);
             
-            MelonLogger.Msg($"[QuestModSettings] Settings File: {modsDirectory}\{settingsFile}");
+            MelonLogger.Msg($"[QuestModSettings] Settings File: {fullPath}");
             
             if (File.Exists(fullPath))
             {

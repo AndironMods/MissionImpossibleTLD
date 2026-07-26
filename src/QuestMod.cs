@@ -122,6 +122,7 @@ namespace MissionImpossible
             
             // Initialize GUI system to display quests in Journal/Collections
             new QuestModGUI();
+		//QuestModGUI.ApplyPatches(HarmonyInstance);
 
             if (_questState == null)
             {
