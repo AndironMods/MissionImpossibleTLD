@@ -38,7 +38,8 @@
     "how_to_customize": {
       "enable_disable_items": "Set enabled to true/false for each variant",
       "disable_quest_type": "Delete the daily/weekly/monthly entry to disable that type for an item",
-      "example_monthly_only": "Keep only the monthly variant entry, delete daily and weekly"
+      "example_monthly_only": "Keep only the monthly variant entry, delete daily and weekly",
+      "GEAR_Items": "https://the-long-dark-modding.fandom.com/wiki/Gear_Name"
     }
   },
   "items_to_collect": {
