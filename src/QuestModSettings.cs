@@ -79,7 +79,7 @@ namespace MissionImpossible
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowClothing = true;
         
-        [Name("Allow Food")]
+        [Name("Allow Food/Drink")]
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowFood = true;
         
@@ -87,7 +87,7 @@ namespace MissionImpossible
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowTools = true;
         
-        [Name("Allow Ammunition")]
+        [Name("Allow Weapon/Ammunition")]
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowAmmunition = true;
         

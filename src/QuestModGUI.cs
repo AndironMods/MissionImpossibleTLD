@@ -89,6 +89,35 @@ namespace MissionImpossible
             }
         }
 
+        public void OnApplicationQuit()
+        {
+            CleanupQuestEntries();
+        }
+
+        private static void CleanupQuestEntries()
+        {
+            try
+            {
+                foreach (var kvp in _cachedEntries)
+                {
+                    if (kvp.Value?.gameObject != null)
+                    {
+                        try
+                        {
+                            UnityEngine.Object.Destroy(kvp.Value.gameObject);
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+
+            _cachedEntries.Clear();
+            _cachedGrandparent = null;
+            _panelLog = null;
+            _offsetsCompressed = false;
+        }
+
         private static void Prefix_Panel_Log_Refresh(Panel_Log __instance)
         {
             _panelLog = __instance;
@@ -105,10 +134,7 @@ namespace MissionImpossible
 
             if (isGenuinelyNewInstance)
             {
-                _cachedEntries.Clear();
-                _cachedGrandparent = null;
-                _offsetsCompressed = false;
-
+                CleanupQuestEntries();
             }
         }
 
