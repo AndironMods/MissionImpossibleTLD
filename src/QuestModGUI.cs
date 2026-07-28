@@ -155,12 +155,7 @@ namespace MissionImpossible
             }
         }
 
-        /// <summary>
-        /// Compresses the native ScrollList's row spacing to QUEST_ROW_SCALE, caching the
-        /// original values the first time it's called. Used both before native row layout
-        /// (Prefix_BuildCollectionsList) and whenever quest rows are repositioned, since the
-        /// scroll list may reset these on its own.
-        /// </summary>
+        // Compresses native row spacing to QUEST_ROW_SCALE, caching original values once
         private static void CompressScrollListOffsets(ScrollList scrollList)
         {
             if (!_offsetsCompressed)
@@ -183,13 +178,7 @@ namespace MissionImpossible
             }
         }
 
-        /// <summary>
-        /// CRITICAL: Runs BEFORE native BuildCollectionsList lays out native rows 0-7.
-        /// Without this, native rows get positioned using ORIGINAL (uncompressed) spacing
-        /// on the very first build, while our quest rows always assume COMPRESSED spacing -
-        /// causing a mismatch/overlap that only fixes itself once the list rebuilds again
-        /// (e.g. on second visit, when the offset is already compressed from before).
-        /// </summary>
+        // Must run before native BuildCollectionsList, or rows overlap on first build
         private static void Prefix_BuildCollectionsList(Panel_Log __instance)
         {
             if (__instance == null || QuestMod.Instance == null || !QuestMod.Instance._modSettingsAvailable)
@@ -311,10 +300,7 @@ namespace MissionImpossible
             }
         }
 
-        /// <summary>
-        /// Quest rows must be instantiated as children of GRANDPARENT (fixed container),
-        /// not pooled slots. This prevents the scroll list from reparenting them.
-        /// </summary>
+        // Quest rows are children of GRANDPARENT (fixed), not pooled slots, so the scroll list can't reparent them
         private static CollectionListItem FindOrCreateQuestEntry(Panel_Log panelLog, string type)
         {
             try
@@ -395,10 +381,7 @@ namespace MissionImpossible
                 clone.name = $"QuestEntry_{type}";
                 clone.transform.SetAsLastSibling();
 
-                // CRITICAL: Position immediately - clone starts at template's position (0,0,0)
-                // which overlaps the Notes row. Without this, the clone can render for
-                // a frame at (0,0,0) before ResizeAndRepositionAllEntries() runs, causing
-                // a visible flash/overlap on the very first creation (not on cache reuse).
+                // Position immediately - clone starts at (0,0,0) and would flash-overlap the Notes row for a frame
                 int questTypeIndex = Array.IndexOf(QuestTypes, type);
                 if (questTypeIndex >= 0)
                 {

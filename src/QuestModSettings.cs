@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.IO;
-using System.Text.Json;
 using ModSettings;
 using MelonLoader;
 
 namespace MissionImpossible
 {
-    /// <summary>
-    /// Custom attribute to override how enum values are displayed in the settings menu
-    /// </summary>
+    // Custom attribute to override how enum values are displayed in the settings menu
     [AttributeUsage(AttributeTargets.Field)]
     public class DisplayNameAttribute : Attribute
     {
@@ -36,11 +32,6 @@ namespace MissionImpossible
 
     public class QuestModSettings : ModSettings.JsonModSettings
     {
-        // Settings file will be saved to: {ModsDirectory}/QuestModSettings.json
-        // JsonModSettings automatically creates default file if missing
-        public QuestModSettings() : base("QuestModSettings")
-        {
-        }
 
         // ==================== DIFFICULTY SETTINGS ====================
         [Name("Difficulty Level")]
@@ -97,7 +88,7 @@ namespace MissionImpossible
 
         // ==================== DISPLAY & LOGGING SETTINGS ====================
         [Name("Show Reward")]
-        [Description("Show reward in GUI (hide *** if disabled)")]
+        [Description("Show reward in GUI (hide if disabled)")]
         public bool ShowReward = false;
         
         [Name("Enable Pickup Logging")]
@@ -108,30 +99,10 @@ namespace MissionImpossible
         public void InitializeSettings()
         {
             AddToModSettings("Mission Impossible");
-            
-            // Show settings file location
-            string modsDirectory = MelonLoader.Utils.MelonEnvironment.ModsDirectory;
-            string settingsFile = "QuestModSettings.json";
-            string fullPath = Path.Combine(modsDirectory, settingsFile);
-            
-            MelonLogger.Msg($"[QuestModSettings] Settings File: {fullPath}");
-            
-            if (File.Exists(fullPath))
-            {
-                MelonLogger.Msg($"[QuestModSettings] File loaded from disk");
-            }
-            else
-            {
-                MelonLogger.Msg($"[QuestModSettings] Default settings created (new file)");
-            }
-            
             ValidateConfiguration();
         }
 
-        /// <summary>
-        /// Validate that configuration is in a valid state.
-        /// At least one quest type must be enabled.
-        /// </summary>
+        // Validate that configuration is in a valid state. At least one quest type must be enabled.
         public void ValidateConfiguration()
         {
             bool anyQuestEnabled = EnableDailyQuests || EnableWeeklyQuests || EnableMonthlyQuests;
@@ -149,10 +120,7 @@ namespace MissionImpossible
 
         // ==================== SETTINGS PERSISTENCE ====================
 
-        // ==================== DIFFICULTY CALCULATIONS ====================
-        /// <summary>
-        /// Calculate the required amount based on difficulty setting (0.5x, 1.0x, 2.0x)
-        /// </summary>
+        // Required amount scaled by difficulty (0.5x/1.0x/2.0x)
         public int ApplyRequiredMultiplier(int baseRequired)
         {
             return DifficultyLevel switch
@@ -164,9 +132,7 @@ namespace MissionImpossible
             };
         }
 
-        /// <summary>
-        /// Calculate the reward amount based on difficulty setting
-        /// </summary>
+        // Calculate the reward amount based on difficulty setting
         public int ApplyRewardMultiplier(int baseReward)
         {
             return DifficultyLevel switch
@@ -178,9 +144,7 @@ namespace MissionImpossible
             };
         }
 
-        /// <summary>
-        /// Get a human-readable description of the current difficulty level
-        /// </summary>
+        // Get a human-readable description of the current difficulty level
         public string GetDifficultyDescription()
         {
             return DifficultyLevel switch
@@ -192,9 +156,7 @@ namespace MissionImpossible
             };
         }
 
-        /// <summary>
-        /// Get the list of allowed item categories based on current settings
-        /// </summary>
+        // Get the list of allowed item categories based on current settings
         public List<string> GetAllowedCategories()
         {
             var allowedCategories = new List<string>();
@@ -231,8 +193,10 @@ namespace MissionImpossible
                 MelonLogger.Msg("[QuestModSettings] Only logging settings changed - No quest regeneration needed");
             }
             
+            // base.OnConfirm() calls Save() - required or settings never reach disk
+            base.OnConfirm();
+            
             MelonLogger.Msg("[QuestModSettings] Settings confirmed and applied");
-            // MelonLogger.Msg("[QuestModSettings] =============================================");
         }
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
