@@ -93,7 +93,7 @@ namespace MissionImpossible
         
         [Name("Enable Pickup Logging")]
         [Description("Log item pickup events")]
-        public bool EnablePickupLogging = true;
+        public bool EnablePickupLogging = false;
 
         // ==================== INITIALIZATION ====================
         public void InitializeSettings()

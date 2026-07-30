@@ -8,7 +8,7 @@ using HarmonyLib;
 using Il2Cpp;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.1", "Andiron")]
+[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.0", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 
 namespace MissionImpossible
