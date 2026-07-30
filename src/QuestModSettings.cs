@@ -78,9 +78,9 @@ namespace MissionImpossible
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowTools = true;
         
-        [Name("Allow Weapon/Ammunition")]
+        [Name("Allow FirstAid")]
 	[Description("Enable/Disable will regenerate Quests")]
-        public bool AllowAmmunition = true;
+        public bool AllowFirstAid = true;
         
         [Name("Allow Resources")]
 	[Description("Enable/Disable will regenerate Quests")]
@@ -93,7 +93,7 @@ namespace MissionImpossible
         
         [Name("Enable Pickup Logging")]
         [Description("Log item pickup events")]
-        public bool EnablePickupLogging = false;
+        public bool EnablePickupLogging = true;
 
         // ==================== INITIALIZATION ====================
         public void InitializeSettings()
@@ -164,7 +164,7 @@ namespace MissionImpossible
             if (AllowClothing) allowedCategories.Add("Clothing");
             if (AllowFood) allowedCategories.Add("Food");
             if (AllowTools) allowedCategories.Add("Tools");
-            if (AllowAmmunition) allowedCategories.Add("Ammunition");
+            if (AllowFirstAid) allowedCategories.Add("FirstAid");
             if (AllowResources) allowedCategories.Add("Resources");
             
             return allowedCategories;
@@ -218,7 +218,7 @@ namespace MissionImpossible
                     nameof(AllowClothing),
                     nameof(AllowFood),
                     nameof(AllowTools),
-                    nameof(AllowAmmunition),
+                    nameof(AllowFirstAid),
                     nameof(AllowResources)
                 };
                 

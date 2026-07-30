@@ -8,7 +8,7 @@ using HarmonyLib;
 using Il2Cpp;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.0", "Andiron")]
+[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.1", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 
 namespace MissionImpossible
@@ -39,9 +39,12 @@ namespace MissionImpossible
         public int RewardAmount { get; set; }
         public int StartDay { get; set; }
         public float StartHour { get; set; }
-        public int EndDay { get; set; }  // When the quest period ends
-        public float EndHour { get; set; }  // When the quest period ends
-        public string Status { get; set; } = "Active";  // Active or Complete
+        // When the quest period ends
+        public int EndDay { get; set; }
+        // When the quest period ends
+        public float EndHour { get; set; }
+        // Active or Complete
+        public string Status { get; set; } = "Active";
     }
 
     public class QuestState
@@ -58,15 +61,28 @@ namespace MissionImpossible
         private QuestState _questState;
         private System.Random _random = new System.Random();
 
-        private bool _suppressLogging = false;  // Suppresses logs during initial inventory load
-        private bool _needsInitialQuestGeneration = false;  // Set at init if save was fresh/empty; actual generation deferred to OnUpdate once TimeOfDay is valid
+        // Suppresses logs during initial inventory load
+        private bool _suppressLogging = false;
+        // Set whenever quest generation is needed but TimeOfDay isn't ready yet; actual generation deferred to OnUpdate
+        private bool _needsInitialQuestGeneration = false;
+        // Set after RegenerateQuestsForSettingsChange; actual reseed deferred to OnUpdate
+        private bool _needsReseedAfterRegen = false;
+        private string _currentSceneName = "";
+        // TimeOfDay can be non-null at main menu but report placeholder values; requires gameplay scene check
+        private bool IsInGameplayScene => !string.IsNullOrEmpty(_currentSceneName) &&
+            !_currentSceneName.Contains("MainMenu", StringComparison.OrdinalIgnoreCase) &&
+            !_currentSceneName.Equals("Empty", StringComparison.OrdinalIgnoreCase);
         private DateTime _lastCheckTime;
-        private bool _isGivingReward = false;  // Guard against re-entrancy in reward giving
+        // Guard against re-entrancy in reward giving
+        private bool _isGivingReward = false;
         public bool _modSettingsAvailable = false;
 
-        private bool _needsSave = false;  // Flag to defer saves from callbacks
-        private bool _saveInProgress = false;  // Prevents concurrent save operations (hang prevention)
-        private object _dataLock = new object();  // Thread safety for console/save race conditions
+        // Flag to defer saves from callbacks
+        private bool _needsSave = false;
+        // Prevents concurrent save operations (hang prevention)
+        private bool _saveInProgress = false;
+        // Thread safety for console/save race conditions
+        private object _dataLock = new object();
         
         // Merge/drop tracking by item name, not GearItem ref (avoids stale-object crashes)
         private object _trackingLock = new object();
@@ -75,7 +91,13 @@ namespace MissionImpossible
         private Dictionary<string, int> _trackedItemUnitsByName = new Dictionary<string, int>();
 
         private TimeOfDay TOD => GameManager.GetTimeOfDayComponent();
-        private float CurrentHour => TOD.GetHoursPlayedNotPaused() % 24f;
+        private float CurrentHour => TOD.GetHour() + (TOD.GetMinutes() / 60f);
+
+        // Quest cycles run 9:00 AM to 8:50 AM; new quests wait until 9 AM to appear
+        private const float QUEST_START_HOUR = 9.0f;
+        // 8:50 AM
+        private const float QUEST_END_HOUR = 8.833333f;
+        private const int QUEST_CHECK_INTERVAL_SECONDS = 60;
 
         private string GearLookupPath =>
             Path.Combine(Directory.GetCurrentDirectory(), "Mods", "GearLookup.json");
@@ -179,8 +201,8 @@ namespace MissionImpossible
         // Handle scene loading - suppress initial inventory logging spam
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
-            MelonLogger.Msg($"[QuestMod] Scene loaded: {sceneName} (index: {buildIndex})");
-
+            MelonLogger.Msg($"[QuestMod] Scene loaded: {sceneName}");
+            _currentSceneName = sceneName;
             _suppressLogging = true;
             _lastCheckTime = DateTime.Now;
         }
@@ -215,11 +237,13 @@ namespace MissionImpossible
                 SeedInventoryTracking();
             }
 
-            // Deferred quest gen for a fresh save, once TimeOfDay is actually available
-            if (_needsInitialQuestGeneration && _modSettingsAvailable && TOD != null)
+            // Deferred quest generation - fresh save, or a settings change that came in before
+            // we were actually in a gameplay scene. TOD != null alone is NOT enough - confirmed
+            // via testing that TimeOfDay can be non-null at the main menu with placeholder data.
+            if (_needsInitialQuestGeneration && _modSettingsAvailable && TOD != null && IsInGameplayScene && !_suppressLogging)
             {
-                _needsInitialQuestGeneration = false;  // Set false before the risky call, so a
-                                                        // failure here can't cause a retry loop
+                // Set false before the risky call so a failure here can't cause a retry loop
+                _needsInitialQuestGeneration = false;
                 try
                 {
                     RegenerateQuestsForSettingsChange();
@@ -229,6 +253,20 @@ namespace MissionImpossible
                 catch (Exception ex)
                 {
                     MelonLogger.Error($"[QuestMod] Error generating initial quests: {ex.Message}");
+                }
+            }
+
+            // Deferred reseed after RegenerateQuestsForSettingsChange - see comment there for why this isn't called directly from that method
+            if (_needsReseedAfterRegen)
+            {
+                _needsReseedAfterRegen = false;
+                try
+                {
+                    SeedInventoryTracking();
+                }
+                catch (Exception ex)
+                {
+                    MelonLogger.Error($"[QuestMod] Error reseeding inventory tracking: {ex.Message}");
                 }
             }
 
@@ -286,8 +324,8 @@ namespace MissionImpossible
                 }
             }
 
-            // Check for quest resets every 60 seconds
-            if ((DateTime.Now - _lastCheckTime).TotalSeconds > 60 && _modSettingsAvailable)
+            // Check for quest resets every QUEST_CHECK_INTERVAL_SECONDS
+            if ((DateTime.Now - _lastCheckTime).TotalSeconds > QUEST_CHECK_INTERVAL_SECONDS && _modSettingsAvailable)
             {
                 CheckQuestResets();
                 _lastCheckTime = DateTime.Now;
@@ -443,6 +481,7 @@ namespace MissionImpossible
 
                 int day = tod.GetDayNumber();
                 float hour = CurrentHour;
+                bool anyQuestReplaced = false;
 
                 foreach (var quest in _questState.ActiveQuests.ToList())
                 {
@@ -451,8 +490,10 @@ namespace MissionImpossible
                     {
                         bool periodEnded = (day > quest.EndDay) || 
                                            (day == quest.EndDay && hour >= quest.EndHour);
+
+
                         
-                        if (periodEnded)
+                        if (periodEnded && hour >= QUEST_START_HOUR)
                         {
                             // Reward already given when quest was marked Complete - just remove and regenerate
                             _questState.ActiveQuests.Remove(quest);
@@ -471,6 +512,7 @@ namespace MissionImpossible
                             if (neededCount > 0)
                             {
                                 GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
+                                anyQuestReplaced = true;
                             }
                             
                             SaveData();
@@ -485,8 +527,10 @@ namespace MissionImpossible
                     // Check if quest period has ENDED (use EndDay/EndHour)
                     bool questPeriodEnded = (day > quest.EndDay) || 
                                             (day == quest.EndDay && hour >= quest.EndHour);
+
+
                     
-                    if (questPeriodEnded)
+                    if (questPeriodEnded && hour >= QUEST_START_HOUR)
                     {
                         shouldReset = true;
                     }
@@ -509,8 +553,18 @@ namespace MissionImpossible
                         if (neededCount > 0)
                         {
                             GenerateQuestsAndNotify(quest.Type, neededCount, showCreationLog: true);
+                            anyQuestReplaced = true;
                         }
                     }
+                }
+
+                if (anyQuestReplaced)
+                {
+                    // Re-seed tracking baselines for the new active quest set - without this,
+                    // a replacement quest for an item that was tracked earlier (then removed)
+                    // would inherit a stale baseline instead of the player's true current
+                    // amount, wrongly counting already-owned items as fresh pickups.
+                    SeedInventoryTracking();
                 }
 
                 SaveData();
@@ -585,14 +639,13 @@ namespace MissionImpossible
 
             int currentDay = GetCurrentDay();
             float currentHour = GetCurrentHour();
-            
-            // Calculate quest period end time (always from 9:00 AM to 8:50 AM next period)
-            const float QUEST_START_HOUR = 9.0f;
-            const float QUEST_END_HOUR = 8.833333f;  // 8:50 AM
-            
+
+            // Quest window is always anchored to the fixed 9am-to-8:50am cycle, not a rolling
+            // window from creation time. StartHour is nominal (the "cycle" begins at 9am);
+            // EndDay/EndHour are what actually determine when the quest expires.
             int startDay = currentDay;
             float startHour = QUEST_START_HOUR;
-            
+
             int endDay = currentDay;
             float endHour = QUEST_END_HOUR;
             
@@ -624,6 +677,8 @@ namespace MissionImpossible
             };
 
             _questState.ActiveQuests.Add(quest);
+
+
 
             return true;
         }
@@ -793,6 +848,18 @@ namespace MissionImpossible
         // Clear and regenerate all quests based on current settings
         public void RegenerateQuestsForSettingsChange(bool showCreationLogs = false)
         {
+            // If TimeOfDay isn't available yet, or we're not actually in a gameplay scene
+            // (e.g. settings changed from the main menu before loading a save), defer instead
+            // of generating with placeholder/main-menu day-1 data - confirmed via testing that
+            // TOD can be non-null at the main menu but still report day=1,hour=0 instead of
+            // the real save's data, only becoming accurate once actually loaded into a save.
+            if (TOD == null || !IsInGameplayScene)
+            {
+                _needsInitialQuestGeneration = true;
+                MelonLogger.Msg("[QuestMod] Not in a gameplay scene yet - deferring quest regeneration until we are");
+                return;
+            }
+
             MelonLogger.Msg("[QuestMod] Clearing active quests...");
             _questState.ActiveQuests.Clear();
 
@@ -843,6 +910,13 @@ namespace MissionImpossible
             }
 
             MelonLogger.Msg($"[QuestMod] Total quests generated: {_questState.ActiveQuests.Count}/{totalQuests}");
+
+            // Defer the re-seed to OnUpdate instead of calling it directly here - this method
+            // can be invoked from OnConfirm (a settings-menu UI callback), and every other
+            // inventory/GameManager query in this mod deliberately only happens from the
+            // normal OnUpdate loop, never from a UI callback context.
+            _needsReseedAfterRegen = true;
+
             SaveData();
         }
 
