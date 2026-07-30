@@ -27,7 +27,7 @@ When each period ends (tomorrow, next week, next month), you automatically recei
 - Great for steady progression
 
 ### Weekly Quests  
-- New quest every Monday at 9 AM
+- New quest at the start of each week
 - Due in 7 days
 - Harder challenges
 - Bigger rewards
@@ -101,7 +101,7 @@ A: No penalty! A new quest simply generates. The incomplete quest is removed.
 A: By default, no - but you can enable it in your Mod Settings!
 
 **Q: Do quests get harder as I progress?**  
-A: The mod scales based on game difficulty, not your progress. Higher difficulties = harder quests + better rewards.
+A: The mod scales based on quest difficulty, not your progress. Higher difficulties = harder quests + better rewards.
 
 **Q: Can I turn off specific quest types?**  
 A: Yes! Disable daily, weekly, or monthly quests individually in Mod settings.
@@ -111,6 +111,9 @@ A: No. All quest data is stored separately. You can remove the mod anytime witho
 
 **Q: What if I want to reset all quests?**  
 A: Change any Settings in Mod Setting - new quests generate immediately.
+
+**Q: Can I change the amount of Items to collect or receive?**  
+A: Yes, you can change any settings to your personal preference in GearLookup.json.
 
 
 ## Tips & Tricks
