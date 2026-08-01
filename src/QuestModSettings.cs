@@ -45,6 +45,7 @@ namespace MissionImpossible
         public int DailyQuestCount = 1;
         
         [Name("Enable Daily Quests")]
+	[Description("Enable/Disable daily quests")]
         public bool EnableDailyQuests = true;
         
         // ==================== WEEKLY QUEST SETTINGS ====================
@@ -54,6 +55,7 @@ namespace MissionImpossible
         public int WeeklyQuestCount = 2;
         
         [Name("Enable Weekly Quests")]
+	[Description("Enable/Disable weekly quests")]
         public bool EnableWeeklyQuests = true;
         
         // ==================== MONTHLY QUEST SETTINGS ====================
@@ -63,6 +65,7 @@ namespace MissionImpossible
         public int MonthlyQuestCount = 3;
         
         [Name("Enable Monthly Quests")]
+	[Description("Enable/Disable montly quests")]
         public bool EnableMonthlyQuests = true;
 
         // ==================== CATEGORY FILTERS ====================
@@ -82,17 +85,21 @@ namespace MissionImpossible
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowFirstAid = true;
         
-        [Name("Allow Resources")]
+        [Name("Allow Material")]
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowResources = true;
+
+        [Name("Allow DLC Content")]
+	[Description("Enable/Disable will regenerate Quests")]
+        public bool AllowDLC = false;
 
         // ==================== DISPLAY & LOGGING SETTINGS ====================
         [Name("Show Reward")]
         [Description("Show reward in GUI (hide if disabled)")]
         public bool ShowReward = false;
         
-        [Name("Enable Pickup Logging")]
-        [Description("Log item pickup events")]
+        [Name("Enable Logging")]
+        [Description("Log quest related events")]
         public bool EnablePickupLogging = false;
 
         // ==================== INITIALIZATION ====================
@@ -166,6 +173,7 @@ namespace MissionImpossible
             if (AllowTools) allowedCategories.Add("Tools");
             if (AllowFirstAid) allowedCategories.Add("FirstAid");
             if (AllowResources) allowedCategories.Add("Resources");
+            if (AllowDLC) allowedCategories.Add("DLC");
             
             return allowedCategories;
         }
@@ -219,7 +227,8 @@ namespace MissionImpossible
                     nameof(AllowFood),
                     nameof(AllowTools),
                     nameof(AllowFirstAid),
-                    nameof(AllowResources)
+                    nameof(AllowResources),
+                    nameof(AllowDLC)
                 };
                 
                 if (System.Array.Exists(questSettingNames, element => element == field.Name))

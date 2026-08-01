@@ -568,13 +568,13 @@ namespace MissionImpossible
             {
                 var quest = quests[i];
                 string status = quest.Status == "Complete" ? "Complete" : "Active";
-                string itemName = quest.CollectKey.StartsWith("GEAR_") ? quest.CollectKey.Substring(5) : quest.CollectKey;
+                string itemName = QuestMod.Instance.GetDisplayName(quest.CollectKey);
                 
                 string objectiveLine = $"{i + 1}# Collect {itemName} - {quest.CurrentAmount}/{quest.RequiredAmount} - {status}";
                 
                 if (QuestMod.Instance._settings.ShowReward)
                 {
-                    string rewardName = quest.RewardKey.StartsWith("GEAR_") ? quest.RewardKey.Substring(5) : quest.RewardKey;
+                    string rewardName = QuestMod.Instance.GetDisplayName(quest.RewardKey);
                     objectiveLine += $" - Reward: {quest.RewardAmount} {rewardName}";
                 }
                 
