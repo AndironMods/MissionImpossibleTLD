@@ -89,9 +89,9 @@ namespace MissionImpossible
 	[Description("Enable/Disable will regenerate Quests")]
         public bool AllowResources = true;
 
-        [Name("Allow DLC Content")]
-	[Description("Enable/Disable will regenerate Quests")]
-        public bool AllowDLC = false;
+        // DLC content is no longer a manual toggle: it's force-enabled automatically once the
+        // mod detects the DLC is installed (see QuestMod.CheckForDlcAutoEnable), and force-
+        // disabled if it isn't. There is nothing for the player to configure here.
 
         // ==================== DISPLAY & LOGGING SETTINGS ====================
         [Name("Show Reward")]
@@ -173,7 +173,8 @@ namespace MissionImpossible
             if (AllowTools) allowedCategories.Add("Tools");
             if (AllowFirstAid) allowedCategories.Add("FirstAid");
             if (AllowResources) allowedCategories.Add("Resources");
-            if (AllowDLC) allowedCategories.Add("DLC");
+            // "DLC" is intentionally not added here - QuestMod appends it based on runtime
+            // detection (see QuestMod.GenerateQuestOfType), not a player-facing setting.
             
             return allowedCategories;
         }
@@ -227,8 +228,7 @@ namespace MissionImpossible
                     nameof(AllowFood),
                     nameof(AllowTools),
                     nameof(AllowFirstAid),
-                    nameof(AllowResources),
-                    nameof(AllowDLC)
+                    nameof(AllowResources)
                 };
                 
                 if (System.Array.Exists(questSettingNames, element => element == field.Name))

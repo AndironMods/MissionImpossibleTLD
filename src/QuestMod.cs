@@ -7,7 +7,7 @@ using MelonLoader;
 using Il2Cpp;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.1.0", "Andiron")]
+[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.0", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 
 namespace MissionImpossible
@@ -49,6 +49,10 @@ namespace MissionImpossible
     public class QuestState
     {
         public List<Quest> ActiveQuests { get; set; } = new List<Quest>();
+        // Set once a "_DLC01" scene is observed loading - Unity can't load a scene that doesn't
+        // exist, so this is a reliable, zero-guesswork signal that DLC content is installed.
+        // DLC content is force-enabled from that point on; there is no player-facing toggle.
+        public bool DlcAutoDetected { get; set; } = false;
     }
 
     public class QuestMod : MelonMod
@@ -208,6 +212,35 @@ namespace MissionImpossible
             _currentSceneName = sceneName;
             _suppressLogging = true;
             _lastCheckTime = DateTime.Now;
+
+            CheckForDlcAutoEnable(sceneName);
+        }
+
+        // A "_DLC01" scene can only load if the DLC is installed - Unity can't load a scene
+        // that doesn't exist on disk. This fires once per install (persisted via _questState).
+        // DLC content is force-enabled from this point on - there is no player-facing toggle.
+        private void CheckForDlcAutoEnable(string sceneName)
+        {
+            if (string.IsNullOrEmpty(sceneName) || _questState == null)
+                return;
+
+            if (_questState.DlcAutoDetected)
+                return;
+
+            if (sceneName.IndexOf("_DLC01", StringComparison.OrdinalIgnoreCase) < 0)
+                return;
+
+            _questState.DlcAutoDetected = true;
+            _needsSave = true;
+
+            MelonLogger.Msg($"[QuestMod] DLC content detected (scene: {sceneName}) - DLC items now included in quest generation.");
+
+            // Only regenerate if quests already exist this session - if initial generation
+            // hasn't run yet, it will naturally include DLC items now that this is set.
+            if (!_needsInitialQuestGeneration)
+            {
+                RegenerateQuestsForSettingsChange(showCreationLogs: true);
+            }
         }
 
         // Handle scene unloading - save quest data before transition
@@ -622,6 +655,10 @@ namespace MissionImpossible
             }
 
             List<string> allowedCategories = _settings.GetAllowedCategories();
+            if (_questState != null && _questState.DlcAutoDetected)
+            {
+                allowedCategories.Add("DLC");
+            }
             var validItems = new List<KeyValuePair<string, List<GearEntry>>>();
 
             foreach (var kvp in _lookup.items_to_collect)

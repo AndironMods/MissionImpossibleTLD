@@ -1,3 +1,9 @@
+\## v1.2.0
+
+* DLC Content will now be autodetected and enabled
+
+
+
 \## v1.1.0
 
 * Add DLC Content Switch to QuestModSettings
@@ -10,5 +16,5 @@
 
 \## v1.0.0
 
-\- Initial release
+* Initial release
 
