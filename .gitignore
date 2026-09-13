@@ -68,3 +68,8 @@ Desktop.ini
 # Project-specific
 ###############################
 QuestMod.csproj.user
+
+###############################
+# Claude Code
+###############################
+CLAUDE.md

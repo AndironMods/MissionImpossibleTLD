@@ -575,7 +575,7 @@ namespace MissionImpossible
                 if (QuestMod.Instance._settings.ShowReward)
                 {
                     string rewardName = QuestMod.Instance.GetDisplayName(quest.RewardKey);
-                    objectiveLine += $" - Reward: {quest.RewardAmount} {rewardName}";
+                    objectiveLine += $" - Reward: {quest.RewardAmount}x {rewardName}";
                 }
                 
                 lines.Add(objectiveLine);

@@ -5,9 +5,10 @@ using System.Text.Json;
 using System.Collections.Generic;
 using MelonLoader;
 using Il2Cpp;
+using Il2CppTLD.Gear;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.0.0", "Andiron")]
+[assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.3.0", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 
 namespace MissionImpossible
@@ -1258,16 +1259,66 @@ namespace MissionImpossible
             return _questState.ActiveQuests.Where(q => q.Type == type).ToList();
         }
 
-        // Friendly display name for a spawn_name (e.g. "GEAR_CookedBannock" -> "Bannock"),
-        // taken from the JSON key in GearLookup.json. Falls back to stripping "GEAR_" if the
-        // spawn_name isn't in the map (e.g. lookup not loaded yet, or JSON edited externally).
+        // Caches the resolved GearItemData (not a live GearItem/GameObject) per spawn_name, so
+        // the one-time instantiate+destroy cost is paid at most once per unique item per session.
+        private Dictionary<string, GearItemData> _spawnNameToGearItemData = new Dictionary<string, GearItemData>(System.StringComparer.OrdinalIgnoreCase);
+
+        // Resolves and caches the GearItemData for a spawn_name by briefly instantiating the
+        // prefab and reading its data reference back off, then destroying the instance. A null
+        // cache entry (failed resolution) is also stored, so a bad spawn_name only costs once.
+        private GearItemData GetGearItemDataFor(string spawnName)
+        {
+            if (_spawnNameToGearItemData.TryGetValue(spawnName, out GearItemData cached))
+                return cached;
+
+            GearItemData data = null;
+            try
+            {
+                GearItem probe = GearItem.InstantiateGearItem(spawnName);
+                if (probe != null)
+                {
+                    data = probe.GearItemData;
+                    UnityEngine.Object.Destroy(probe.gameObject);
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[QuestMod] Failed to resolve GearItemData for '{spawnName}': {ex.Message}");
+            }
+
+            _spawnNameToGearItemData[spawnName] = data;
+            return data;
+        }
+
+        // Real, current-language display name for a spawn_name (e.g. "GEAR_CookedBannock" ->
+        // the game's own localized name for that item, in whatever language the player has
+        // selected). Resolved via the item's GearItemData.DisplayName, which wraps a Unity
+        // LocalizedString and re-resolves against the active locale on every read - no
+        // language-change handling needed on our side.
+        // Falls back to the JSON-key name, then to stripping "GEAR_", if live resolution fails
+        // (e.g. an unrecognized spawn_name, or called before the asset system is ready).
         public string GetDisplayName(string spawnName)
         {
             if (string.IsNullOrEmpty(spawnName))
                 return spawnName;
 
-            if (_spawnNameToDisplayName.TryGetValue(spawnName, out string displayName))
-                return displayName;
+            try
+            {
+                GearItemData data = GetGearItemDataFor(spawnName);
+                if (data != null)
+                {
+                    string localized = data.DisplayName;
+                    if (!string.IsNullOrEmpty(localized))
+                        return localized;
+                }
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[QuestMod] Error reading localized DisplayName for '{spawnName}': {ex.Message}");
+            }
+
+            if (_spawnNameToDisplayName.TryGetValue(spawnName, out string jsonName))
+                return jsonName;
 
             return spawnName.StartsWith("GEAR_") ? spawnName.Substring(5) : spawnName;
         }
