@@ -43,7 +43,6 @@ jobs:
         copy src\GearLookup.json release\
         copy README.md release\
         copy CHANGELOG.md release\
-        copy LICENSE release\
 
     - name: Create ZIP
       run: powershell Compress-Archive -Path release\* -DestinationPath MissionImpossibleTLD.zip
