@@ -121,6 +121,7 @@ namespace MissionImpossible
             _cachedGrandparent = null;
             _panelLog = null;
             _offsetsCompressed = false;
+            _bigIconTransform = null;
         }
 
         private static void Prefix_Panel_Log_Refresh(Panel_Log __instance)
@@ -513,6 +514,25 @@ namespace MissionImpossible
             }
         }
 
+        // Shared "big icon" GameObject in the collection detail panel (right side of the collections screen).
+        // Cached once by name lookup since it lives outside the per-row clones we create.
+        private static Transform _bigIconTransform;
+
+        private static Transform FindChildByName(Transform root, string name)
+        {
+            if (root.name == name)
+                return root;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                var found = FindChildByName(root.GetChild(i), name);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
+        }
+
         private static void ApplyQuestDetailOverrideIfNeeded(Panel_Log panelLog)
         {
             if (panelLog?.m_CollectionList == null || QuestMod.Instance == null)
@@ -536,6 +556,18 @@ namespace MissionImpossible
                         questType = kvp.Key;
                         break;
                     }
+                }
+
+                // Big icon on the right side: hide only while a Quest entry is selected, restore for
+                // every other (non-quest) collections entry so real Notes/collectibles keep their icon (v1.4)
+                if (_bigIconTransform == null)
+                    _bigIconTransform = FindChildByName(panelLog.transform, "CollectibleImage_new");
+
+                if (_bigIconTransform != null)
+                {
+                    bool shouldBeHidden = questType != null;
+                    if (_bigIconTransform.gameObject.activeSelf == shouldBeHidden)
+                        _bigIconTransform.gameObject.SetActive(!shouldBeHidden);
                 }
 
                 if (questType == null)

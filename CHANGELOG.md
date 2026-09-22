@@ -1,3 +1,10 @@
+\## v1.4.0
+
+* Remove background icon on the right side in Quest GUI
+* Update GearLookup.json to be more balanced
+
+
+
 \## v1.3.0
 
 * All Gear Item Names will now be fully localized in all languages

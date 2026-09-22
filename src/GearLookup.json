@@ -1,6 +1,7 @@
 {
   "_info": {
       "description": "Quest System Configuration for Mission Impossible Mod",
+      "version": "1.4.0",
       "difficulty_modifiers": {
         "Easy (Pilgrim)": {
           "required_multiplier": "0.5x",
@@ -1833,6 +1834,51 @@
       {"category": "Tools", "spawn_name": "GEAR_WireBundle", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Tools", "spawn_name": "GEAR_WireBundle", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
       {"category": "Tools", "spawn_name": "GEAR_WireBundle", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
+    ],
+    "CougarHideDried": [
+      {"category": "DLC", "spawn_name": "GEAR_CougarHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "spawn_name": "GEAR_CougarHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "spawn_name": "GEAR_CougarHideDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "BearHideDried": [
+      {"category": "Resources", "spawn_name": "GEAR_BearHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_BearHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_BearHideDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "GutDried": [
+      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "LeatherHideDried": [
+      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "MooseHideDried": [
+      {"category": "Resources", "spawn_name": "GEAR_MooseHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_MooseHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_MooseHideDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "RabbitPeltDried": [
+      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "WolfPeltDried": [
+      {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "BirchSaplingDried": [
+      {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+    ],
+    "MapleSaplingDried": [
+      {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
+      {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
     ]
   }
 }
