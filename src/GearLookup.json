@@ -563,11 +563,6 @@
       {"category": "Resources", "spawn_name": "GEAR_OldMansBeardHarvested", "required": 4, "quest_type": "weekly", "enabled": true},
       {"category": "Resources", "spawn_name": "GEAR_OldMansBeardHarvested", "required": 8, "quest_type": "monthly", "enabled": true}
     ],
-    "RabbitPelt": [
-      {"category": "Resources", "spawn_name": "GEAR_RabbitPelt", "required": 1, "quest_type": "daily", "enabled": true},
-      {"category": "Resources", "spawn_name": "GEAR_RabbitPelt", "required": 4, "quest_type": "weekly", "enabled": true},
-      {"category": "Resources", "spawn_name": "GEAR_RabbitPelt", "required": 8, "quest_type": "monthly", "enabled": true}
-    ],
     "RabbitPeltDried": [
       {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "required": 1, "quest_type": "daily", "enabled": false},
       {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "required": 4, "quest_type": "weekly", "enabled": false},
@@ -617,11 +612,6 @@
       {"category": "Resources", "spawn_name": "GEAR_Tinder", "required": 2, "quest_type": "daily", "enabled": true},
       {"category": "Resources", "spawn_name": "GEAR_Tinder", "required": 4, "quest_type": "weekly", "enabled": true},
       {"category": "Resources", "spawn_name": "GEAR_Tinder", "required": 6, "quest_type": "monthly", "enabled": true}
-    ],
-    "WolfPelt": [
-      {"category": "Resources", "spawn_name": "GEAR_WolfPelt", "required": 1, "quest_type": "daily", "enabled": true},
-      {"category": "Resources", "spawn_name": "GEAR_WolfPelt", "required": 2, "quest_type": "weekly", "enabled": true},
-      {"category": "Resources", "spawn_name": "GEAR_WolfPelt", "required": 4, "quest_type": "monthly", "enabled": true}
     ],
     "WolfPeltDried": [
       {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "required": 4, "quest_type": "daily", "enabled": false},
@@ -763,7 +753,7 @@
     "DeerSkinPants": [
       {"category": "Clothing", "spawn_name": "GEAR_DeerSkinPants", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Clothing", "spawn_name": "GEAR_DeerSkinPants", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Clothing", "spawn_name": "GEAR_DeerSkinPants", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Clothing", "spawn_name": "GEAR_DeerSkinPants", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
     ],
     "DownParka": [
       {"category": "Clothing", "spawn_name": "GEAR_DownParka", "reward_amount": 1, "quest_type": "daily", "enabled": false},
@@ -874,16 +864,6 @@
       {"category": "Clothing", "spawn_name": "GEAR_MilitaryParka", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Clothing", "spawn_name": "GEAR_MilitaryParka", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
       {"category": "Clothing", "spawn_name": "GEAR_MilitaryParka", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
-    ],
-    "MinersBoots": [
-      {"category": "Clothing", "spawn_name": "GEAR_MinersBoots", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Clothing", "spawn_name": "GEAR_MinersBoots", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Clothing", "spawn_name": "GEAR_MinersBoots", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
-    ],
-    "MinersJacket": [
-      {"category": "Clothing", "spawn_name": "GEAR_MinersJacket", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Clothing", "spawn_name": "GEAR_MinersJacket", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Clothing", "spawn_name": "GEAR_MinersJacket", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
     ],
     "MinersPants": [
       {"category": "Clothing", "spawn_name": "GEAR_MinersPants", "reward_amount": 1, "quest_type": "daily", "enabled": false},
@@ -1090,11 +1070,6 @@
       {"category": "DLC", "spawn_name": "GEAR_HandheldShortwave", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
       {"category": "DLC", "spawn_name": "GEAR_HandheldShortwave", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
     ],
-    "MinersHelmet": [
-      {"category": "DLC", "spawn_name": "GEAR_MinersHelmet", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "DLC", "spawn_name": "GEAR_MinersHelmet", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "DLC", "spawn_name": "GEAR_MinersHelmet", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
-    ],
     "HeatPad": [
       {"category": "DLC", "spawn_name": "GEAR_HeatPad", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "DLC", "spawn_name": "GEAR_HeatPad", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
@@ -1124,11 +1099,6 @@
       {"category": "DLC", "spawn_name": "GEAR_CookedPancakePeach", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "DLC", "spawn_name": "GEAR_CookedPancakePeach", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
       {"category": "DLC", "spawn_name": "GEAR_CookedPancakePeach", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
-    ],
-    "ManufacturedArrow": [
-      {"category": "DLC", "spawn_name": "GEAR_ArrowManufactured", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "DLC", "spawn_name": "GEAR_ArrowManufactured", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "DLC", "spawn_name": "GEAR_ArrowManufactured", "reward_amount": 1, "quest_type": "monthly", "enabled": false}
     ],
     "BreyerhousePie": [
       {"category": "DLC", "spawn_name": "GEAR_CookedPieMeat", "reward_amount": 1, "quest_type": "daily", "enabled": false},
@@ -1416,9 +1386,9 @@
       {"category": "Food", "spawn_name": "GEAR_CookedMeatMoose", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "CookedMeatPtarmigan": [
-      {"category": "Food", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Food", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
-      {"category": "Food", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
+      {"category": "DLC", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 1, "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "spawn_name": "GEAR_CookedMeatPtarmigan", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "CookedMeatRabbit": [
       {"category": "Food", "spawn_name": "GEAR_CookedMeatRabbit", "reward_amount": 1, "quest_type": "daily", "enabled": true},
@@ -1476,24 +1446,24 @@
       {"category": "DLC", "spawn_name": "GEAR_Potato", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "RawMeatBear": [
-      {"category": "Food", "spawn_name": "GEAR_RawMeatBear", "reward_amount": 1, "quest_type": "daily", "enabled": true},
+      {"category": "Food", "spawn_name": "GEAR_RawMeatBear", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Food", "spawn_name": "GEAR_RawMeatBear", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
       {"category": "Food", "spawn_name": "GEAR_RawMeatBear", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "RawMeatDeer": [
-      {"category": "Food", "spawn_name": "GEAR_RawMeatDeer", "reward_amount": 1, "quest_type": "daily", "enabled": true},
+      {"category": "Food", "spawn_name": "GEAR_RawMeatDeer", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Food", "spawn_name": "GEAR_RawMeatDeer", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
       {"category": "Food", "spawn_name": "GEAR_RawMeatDeer", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "RawMeatMoose": [
-      {"category": "Food", "spawn_name": "GEAR_RawMeatMoose", "reward_amount": 1, "quest_type": "daily", "enabled": true},
+      {"category": "Food", "spawn_name": "GEAR_RawMeatMoose", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Food", "spawn_name": "GEAR_RawMeatMoose", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
       {"category": "Food", "spawn_name": "GEAR_RawMeatMoose", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "RawMeatPtarmigan": [
-      {"category": "Food", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 1, "quest_type": "daily", "enabled": true},
-      {"category": "Food", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
-      {"category": "Food", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
+      {"category": "DLC", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 1, "quest_type": "daily", "enabled": true},
+      {"category": "DLC", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 2, "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "spawn_name": "GEAR_RawMeatPtarmigan", "reward_amount": 4, "quest_type": "monthly", "enabled": true}
     ],
     "RawMeatRabbit": [
       {"category": "Food", "spawn_name": "GEAR_RawMeatRabbit", "reward_amount": 1, "quest_type": "daily", "enabled": true},
@@ -1847,13 +1817,13 @@
     ],
     "GutDried": [
       {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 1, "quest_type": "weekly", "enabled": true},
+      {"category": "Resources", "spawn_name": "GEAR_GutDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ],
     "LeatherHideDried": [
       {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 1, "quest_type": "weekly", "enabled": true},
+      {"category": "Resources", "spawn_name": "GEAR_LeatherHideDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ],
     "MooseHideDried": [
       {"category": "Resources", "spawn_name": "GEAR_MooseHideDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
@@ -1862,23 +1832,23 @@
     ],
     "RabbitPeltDried": [
       {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 1, "quest_type": "weekly", "enabled": true},
+      {"category": "Resources", "spawn_name": "GEAR_RabbitPeltDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ],
     "WolfPeltDried": [
       {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_WolfPeltDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ],
     "BirchSaplingDried": [
       {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_BirchSaplingDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ],
     "MapleSaplingDried": [
       {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "daily", "enabled": false},
       {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "weekly", "enabled": false},
-      {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 1, "quest_type": "monthly", "enabled": true}
+      {"category": "Resources", "spawn_name": "GEAR_MapleSaplingDried", "reward_amount": 2, "quest_type": "monthly", "enabled": true}
     ]
   }
 }
