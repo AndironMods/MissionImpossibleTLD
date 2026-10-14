@@ -43,8 +43,8 @@
       },
       "achievement_rewards": {
         "description": "The achievements section at the end of this file gives a reward when a Steam achievement is newly unlocked (base game and DLC). Keys are the game's achievement names, identical to the Steam API names.",
-        "quest_type": "daily | weekly | monthly - picks a random enabled item from the matching items_as_reward pool (daily = small rewards, monthly = best rewards)",
-        "enabled": "Set to false to give no reward for that achievement. Achievements that are not listed (e.g. Wintermute story achievements) give no reward."
+        "quest_type": "Every achievement has a daily, weekly and monthly variant. The enabled variant picks a random enabled item from the matching items_as_reward pool (daily = small rewards, monthly = best rewards). If several variants are enabled, one of them is chosen at random.",
+        "enabled": "Disable all three variants to give no reward for that achievement. Achievements that are not listed (e.g. Wintermute story achievements) give no reward."
       }
     },
   "items_to_collect": {
@@ -1857,52 +1857,240 @@
     ]
   },
   "achievements": {
-    "Survival_1_Days": {"quest_type": "daily", "enabled": true},
-    "Survival_1_Night": {"quest_type": "daily", "enabled": true},
-    "Survival_3_Nights": {"quest_type": "daily", "enabled": true},
-    "Survival_10_Days": {"quest_type": "daily", "enabled": true},
-    "Wrapped_Fur": {"quest_type": "daily", "enabled": true},
-    "Big_Fish": {"quest_type": "daily", "enabled": true},
-    "Harvest_10_Deer": {"quest_type": "weekly", "enabled": true},
-    "Natural_Healer": {"quest_type": "weekly", "enabled": true},
-    "Happy_Harvester": {"quest_type": "weekly", "enabled": true},
-    "Living_Off_Land": {"quest_type": "weekly", "enabled": true},
-    "LakeCoastalInteriors": {"quest_type": "weekly", "enabled": true},
-    "WellNourished": {"quest_type": "weekly", "enabled": true},
-    "StoneAgeSniper": {"quest_type": "weekly", "enabled": true},
-    "TasteTheImpossible": {"quest_type": "weekly", "enabled": true},
-    "SkilledSurvivor": {"quest_type": "weekly", "enabled": true},
-    "Survival_50_Days": {"quest_type": "weekly", "enabled": true},
-    "NoGun_50_Days": {"quest_type": "weekly", "enabled": true},
-    "NoKill_25_Days": {"quest_type": "weekly", "enabled": true},
-    "ResoluteOutfitter": {"quest_type": "weekly", "enabled": true},
-    "ThereWillBeBlood": {"quest_type": "weekly", "enabled": true},
-    "SomethingWicked": {"quest_type": "monthly", "enabled": true},
-    "ExpertAngler": {"quest_type": "weekly", "enabled": true},
-    "BrokenBody": {"quest_type": "monthly", "enabled": true},
-    "TackleBox": {"quest_type": "weekly", "enabled": true},
-    "Hotshot": {"quest_type": "weekly", "enabled": true},
-    "DownBelow": {"quest_type": "weekly", "enabled": true},
-    "Survival_100_Days": {"quest_type": "monthly", "enabled": true},
-    "Survival_500_Days": {"quest_type": "monthly", "enabled": true},
-    "PenitentScholar": {"quest_type": "monthly", "enabled": true},
-    "FaithfulCartographer": {"quest_type": "monthly", "enabled": true},
-    "TimberwolfMountain": {"quest_type": "monthly", "enabled": true},
-    "DesolationPoint": {"quest_type": "monthly", "enabled": true},
-    "DeepForest": {"quest_type": "monthly", "enabled": true},
-    "ChallengeMastery": {"quest_type": "monthly", "enabled": true},
-    "ThanksForTheMemories": {"quest_type": "monthly", "enabled": true},
-    "DLC01_SomethingWarmToDrink": {"quest_type": "weekly", "enabled": true},
-    "DLC01_TooGreedilyTooDeep": {"quest_type": "weekly", "enabled": true},
-    "DLC01_ToTheTeeth": {"quest_type": "monthly", "enabled": true},
-    "DLC01_TastingMenu": {"quest_type": "monthly", "enabled": true},
-    "DLC01_RudigersDream": {"quest_type": "monthly", "enabled": true},
-    "DLC01_QuickDraw": {"quest_type": "weekly", "enabled": true},
-    "DLC01_Exposure": {"quest_type": "monthly", "enabled": true},
-    "DLC01_ShutterBug": {"quest_type": "monthly", "enabled": true},
-    "DLC01_OnTheLookout": {"quest_type": "weekly", "enabled": true},
-    "DLC01_GoodAndServices": {"quest_type": "weekly", "enabled": true},
-    "DLC01_EndOfTheEarth": {"quest_type": "monthly", "enabled": true},
-    "DLC01_ToughEnough": {"quest_type": "monthly", "enabled": true}
+    "Survival_1_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Survival_1_Night": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Survival_3_Nights": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Survival_10_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Wrapped_Fur": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Big_Fish": [
+      {"category": "Base", "quest_type": "daily", "enabled": true},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Harvest_10_Deer": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Natural_Healer": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Happy_Harvester": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Living_Off_Land": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "LakeCoastalInteriors": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "WellNourished": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "StoneAgeSniper": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "TasteTheImpossible": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "SkilledSurvivor": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Survival_50_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "NoGun_50_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "NoKill_25_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "ResoluteOutfitter": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "ThereWillBeBlood": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "SomethingWicked": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "ExpertAngler": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "BrokenBody": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "TackleBox": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Hotshot": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "DownBelow": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": true},
+      {"category": "Base", "quest_type": "monthly", "enabled": false}
+    ],
+    "Survival_100_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "Survival_500_Days": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "PenitentScholar": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "FaithfulCartographer": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "TimberwolfMountain": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "DesolationPoint": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "DeepForest": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "ChallengeMastery": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "ThanksForTheMemories": [
+      {"category": "Base", "quest_type": "daily", "enabled": false},
+      {"category": "Base", "quest_type": "weekly", "enabled": false},
+      {"category": "Base", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_SomethingWarmToDrink": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "quest_type": "monthly", "enabled": false}
+    ],
+    "DLC01_TooGreedilyTooDeep": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "quest_type": "monthly", "enabled": false}
+    ],
+    "DLC01_ToTheTeeth": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_TastingMenu": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_RudigersDream": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_QuickDraw": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "quest_type": "monthly", "enabled": false}
+    ],
+    "DLC01_Exposure": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_ShutterBug": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_OnTheLookout": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "quest_type": "monthly", "enabled": false}
+    ],
+    "DLC01_GoodAndServices": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": true},
+      {"category": "DLC", "quest_type": "monthly", "enabled": false}
+    ],
+    "DLC01_EndOfTheEarth": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ],
+    "DLC01_ToughEnough": [
+      {"category": "DLC", "quest_type": "daily", "enabled": false},
+      {"category": "DLC", "quest_type": "weekly", "enabled": false},
+      {"category": "DLC", "quest_type": "monthly", "enabled": true}
+    ]
   }
 }

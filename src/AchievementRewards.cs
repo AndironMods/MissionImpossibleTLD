@@ -11,8 +11,7 @@ namespace MissionImpossible
 {
     public class AchievementRewardEntry
     {
-        public string quest_type { get; set; }
-        public bool enabled { get; set; }
+        public List<string> enabledQuestTypes { get; } = new List<string>();
     }
 
     public partial class QuestMod
@@ -37,11 +36,20 @@ namespace MissionImpossible
 
             foreach (JsonProperty item in section.EnumerateObject())
             {
-                _achievementRewards[item.Name] = new AchievementRewardEntry
+                var entry = new AchievementRewardEntry();
+                foreach (JsonElement variant in item.Value.EnumerateArray())
                 {
-                    quest_type = item.Value.GetProperty("quest_type").GetString(),
-                    enabled = item.Value.GetProperty("enabled").GetBoolean()
-                };
+                    if (!variant.GetProperty("enabled").GetBoolean())
+                        continue;
+
+                    string questType = variant.GetProperty("quest_type").GetString();
+                    if (IsQuestType(questType))
+                        entry.enabledQuestTypes.Add(questType);
+                    else
+                        MelonLogger.Warning($"[QuestMod] Achievement '{item.Name}' has unknown quest_type '{questType}' (use daily, weekly or monthly) - ignored.");
+                }
+
+                _achievementRewards[item.Name] = entry;
             }
 
             MelonLogger.Msg($"[QuestMod] Loaded {_achievementRewards.Count} achievement reward entries");
@@ -62,17 +70,13 @@ namespace MissionImpossible
                     return;
 
                 string name = achievement.ToString();
-                if (!_achievementRewards.TryGetValue(name, out AchievementRewardEntry entry) || !entry.enabled)
+                if (!_achievementRewards.TryGetValue(name, out AchievementRewardEntry entry) || entry.enabledQuestTypes.Count == 0)
                     return;
 
                 if (_lookup?.items_as_reward == null)
                     return;
 
-                if (!IsQuestType(entry.quest_type))
-                {
-                    MelonLogger.Warning($"[QuestMod] Achievement '{name}' has unknown quest_type '{entry.quest_type}' (use daily, weekly or monthly) - no reward.");
-                    return;
-                }
+                string questType = entry.enabledQuestTypes[_random.Next(entry.enabledQuestTypes.Count)];
 
                 List<string> allowedCategories = _settings.GetAllowedCategories();
                 if (_questState != null && _questState.DlcAutoDetected)
@@ -80,14 +84,14 @@ namespace MissionImpossible
 
                 var pool = _lookup.items_as_reward
                     .Select(kvp => kvp.Value.FirstOrDefault(v => v.enabled
-                        && v.quest_type.Equals(entry.quest_type, StringComparison.OrdinalIgnoreCase)
+                        && v.quest_type.Equals(questType, StringComparison.OrdinalIgnoreCase)
                         && allowedCategories.Contains(v.category)))
                     .Where(v => v != null)
                     .ToList();
 
                 if (pool.Count == 0)
                 {
-                    MelonLogger.Warning($"[QuestMod] No {entry.quest_type} reward items available for achievement '{name}'.");
+                    MelonLogger.Warning($"[QuestMod] No {questType} reward items available for achievement '{name}'.");
                     return;
                 }
 
@@ -95,7 +99,7 @@ namespace MissionImpossible
                 int amount = _settings.ApplyRewardMultiplier(reward.reward_amount);
 
                 _pendingAchievementRewards.Enqueue((reward.spawn_name, amount, name));
-                MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} ({entry.quest_type}) - reward queued: {amount}x {reward.spawn_name}");
+                MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} ({questType}) - reward queued: {amount}x {reward.spawn_name}");
             }
             catch (Exception ex)
             {
