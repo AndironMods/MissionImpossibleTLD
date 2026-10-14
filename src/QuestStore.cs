@@ -49,6 +49,7 @@ namespace MissionImpossible
                         state.ActiveQuests ??= new List<Quest>();
                         foreach (var quest in state.ActiveQuests)
                         {
+                            quest.CurrentAmount = Math.Min(quest.CurrentAmount, quest.RequiredAmount);
                             quest.Status = quest.CurrentAmount >= quest.RequiredAmount ? "Complete" : "Active";
                         }
                         return state;

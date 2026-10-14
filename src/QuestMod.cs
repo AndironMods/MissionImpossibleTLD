@@ -1150,6 +1150,11 @@ namespace MissionImpossible
                             continue;
 
                         foundMatch = true;
+
+                        // Already complete: further units don't count, the counter stays at the required amount
+                        if (quest.Status == "Complete")
+                            continue;
+
                         quest.CurrentAmount += 1;
 
                         if (verbose)
@@ -1254,7 +1259,7 @@ namespace MissionImpossible
             return data;
         }
 
-        private readonly HashSet<string> _nameChecked = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _nameLookupWarned = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
         // Real, current-language display name for a spawn_name (e.g. "GEAR_CookedBannock" -> the game's own
         // localized name for that item). Resolved with the game's own lookup (GearItem.GetGearDisplayName), which
@@ -1271,15 +1276,12 @@ namespace MissionImpossible
                 if (!string.IsNullOrEmpty(fast) && !fast.Equals(spawnName, StringComparison.OrdinalIgnoreCase)
                     && !fast.StartsWith("GAMEPLAY_", StringComparison.Ordinal) && !fast.StartsWith("GEAR_", StringComparison.Ordinal))
                 {
-                    if (_settings != null && _settings.EnablePickupLogging && _nameChecked.Add(spawnName))
-                        LogNameCheck(spawnName, fast);
-
                     return fast;
                 }
             }
             catch (Exception ex)
             {
-                if (_nameChecked.Add(spawnName))
+                if (_nameLookupWarned.Add(spawnName))
                     MelonLogger.Warning($"[QuestMod] GetGearDisplayName failed for '{spawnName}': {ex.Message}");
             }
 
@@ -1302,21 +1304,6 @@ namespace MissionImpossible
                 return jsonName;
 
             return spawnName.StartsWith("GEAR_") ? spawnName.Substring(5) : spawnName;
-        }
-
-        // Logging only: compares the game's lookup with the name read from an instantiated item, once per item
-        private void LogNameCheck(string spawnName, string fast)
-        {
-            try
-            {
-                string slow = GetGearItemDataFor(spawnName)?.DisplayName;
-                string verdict = string.Equals(fast, slow, StringComparison.Ordinal) ? "MATCH" : "DIFFERENT";
-                MelonLogger.Msg($"[QuestMod] Name check '{spawnName}': lookup='{fast}' instantiated='{slow}' -> {verdict}");
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning($"[QuestMod] Name check failed for '{spawnName}': {ex.Message}");
-            }
         }
 
         // Get the ShowReward setting from mod settings. Used by QuestModGUI to determine if rewards should be visible or hidden as *****.
