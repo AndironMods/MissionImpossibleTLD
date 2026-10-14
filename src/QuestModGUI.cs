@@ -29,6 +29,63 @@ namespace MissionImpossible
             ApplyHarmonyPatches();
         }
 
+        private static readonly Dictionary<string, float> _lastErrorLogTime = new Dictionary<string, float>();
+
+        // Most of this class runs every frame while the journal is open; a persistent error must not flood the log
+        private static void LogErrorThrottled(string message)
+        {
+            float now = Time.unscaledTime;
+            if (_lastErrorLogTime.TryGetValue(message, out float last) && now - last < 10f)
+                return;
+
+            _lastErrorLogTime[message] = now;
+            MelonLogger.Error(message);
+        }
+
+        private static void SetLabelText(UILabel label, string text)
+        {
+            if (label != null && label.text != text)
+                label.text = text;
+        }
+
+        // Journal texts only change with the quest data, the "show reward" setting or the game language
+        private static readonly Dictionary<string, (int revision, bool showReward, string language, string text)> _detailTextCache =
+            new Dictionary<string, (int, bool, string, string)>();
+        private static readonly Dictionary<string, (int revision, string language, string text)> _progressTextCache =
+            new Dictionary<string, (int, string, string)>();
+
+        private static string GetCachedDetailText(string questType)
+        {
+            var mod = QuestMod.Instance;
+            int revision = mod.QuestDataRevision;
+            bool showReward = mod.GetShowRewardSetting();
+            string language = Localization.Language;
+
+            if (_detailTextCache.TryGetValue(questType, out var cached)
+                && cached.revision == revision && cached.showReward == showReward && cached.language == language)
+                return cached.text;
+
+            var summary = mod.GetQuestSummary(questType);
+            string text = !summary.enabled ? "Disabled" : BuildQuestObjectiveText(questType);
+            _detailTextCache[questType] = (revision, showReward, language, text);
+            return text;
+        }
+
+        private static string GetCachedProgressText(string questType)
+        {
+            var mod = QuestMod.Instance;
+            int revision = mod.QuestDataRevision;
+            string language = Localization.Language;
+
+            if (_progressTextCache.TryGetValue(questType, out var cached) && cached.revision == revision && cached.language == language)
+                return cached.text;
+
+            var summary = mod.GetQuestSummary(questType);
+            string text = !summary.enabled ? "Disabled" : $"{summary.completed} / {summary.total}";
+            _progressTextCache[questType] = (revision, language, text);
+            return text;
+        }
+
         private void ApplyHarmonyPatches()
         {
             try
@@ -90,7 +147,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error applying Harmony patches: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error applying Harmony patches: {ex.Message}");
             }
         }
 
@@ -122,6 +179,7 @@ namespace MissionImpossible
             _panelLog = null;
             _offsetsCompressed = false;
             _bigIconTransform = null;
+            _bigIconSearchFailed = false;
         }
 
         private static void Prefix_Panel_Log_Refresh(Panel_Log __instance)
@@ -166,8 +224,14 @@ namespace MissionImpossible
                 _offsetsCompressed = true;
             }
 
-            scrollList.m_OffsetOneAway = _originalOffsetOneAway * QUEST_ROW_SCALE;
-            scrollList.m_OffsetOthers = _originalOffsetOthers * QUEST_ROW_SCALE;
+            Vector2 targetOneAway = _originalOffsetOneAway * QUEST_ROW_SCALE;
+            Vector2 targetOthers = _originalOffsetOthers * QUEST_ROW_SCALE;
+
+            if (scrollList.m_OffsetOneAway == targetOneAway && scrollList.m_OffsetOthers == targetOthers)
+                return;
+
+            scrollList.m_OffsetOneAway = targetOneAway;
+            scrollList.m_OffsetOthers = targetOthers;
 
             try
             {
@@ -175,7 +239,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
             }
         }
 
@@ -195,7 +259,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in Prefix_BuildCollectionsList: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in Prefix_BuildCollectionsList: {ex.Message}");
             }
         }
 
@@ -211,7 +275,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in Postfix_BuildCollectionsList: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in Postfix_BuildCollectionsList: {ex.Message}");
             }
         }
 
@@ -231,7 +295,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in Postfix_Panel_Log_Update: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in Postfix_Panel_Log_Update: {ex.Message}");
             }
         }
 
@@ -249,7 +313,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in Postfix_Panel_Log_LateUpdate: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in Postfix_Panel_Log_LateUpdate: {ex.Message}");
             }
         }
 
@@ -260,6 +324,10 @@ namespace MissionImpossible
 
             try
             {
+                var ownScrollList = _panelLog.m_CollectionsScrollList;
+                if (ownScrollList == null || __instance.Pointer != ownScrollList.Pointer)
+                    return;
+
                 if (!IsOnCollectionsScreen(_panelLog))
                     return;
 
@@ -268,7 +336,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in Postfix_ScrollList_Update: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in Postfix_ScrollList_Update: {ex.Message}");
             }
         }
 
@@ -285,18 +353,12 @@ namespace MissionImpossible
                     if (item == null)
                         continue;
 
-                    var summary = QuestMod.Instance.GetQuestSummary(type);
-                    string label = $"{type} Quests";
-                    string progress = !summary.enabled ? "Disabled" : $"{summary.completed} / {summary.total}";
-
-                    if (item.m_CollectionNameLabel != null)
-                        item.m_CollectionNameLabel.text = label;
-                    if (item.m_CompletionLabel != null)
-                        item.m_CompletionLabel.text = progress;
+                    SetLabelText(item.m_CollectionNameLabel, QuestTitle(type));
+                    SetLabelText(item.m_CompletionLabel, GetCachedProgressText(type));
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Error($"[QuestModGUI] Error ensuring quest entry for {type}: {ex.Message}");
+                    LogErrorThrottled($"[QuestModGUI] Error ensuring quest entry for {type}: {ex.Message}");
                 }
             }
         }
@@ -361,7 +423,7 @@ namespace MissionImpossible
 
                 if (grandparent == null)
                 {
-                    MelonLogger.Error("[QuestModGUI] Could not find grandparent container");
+                    LogErrorThrottled("[QuestModGUI] Could not find grandparent container");
                     return null;
                 }
 
@@ -375,7 +437,7 @@ namespace MissionImpossible
                 GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, _cachedGrandparent);
                 if (clone == null)
                 {
-                    MelonLogger.Error($"[QuestModGUI] Instantiate failed for {type}");
+                    LogErrorThrottled($"[QuestModGUI] Instantiate failed for {type}");
                     return null;
                 }
 
@@ -393,7 +455,7 @@ namespace MissionImpossible
                 var cloneComp = clone.GetComponent<CollectionListItem>();
                 if (cloneComp == null)
                 {
-                    MelonLogger.Error($"[QuestModGUI] Clone missing CollectionListItem component");
+                    LogErrorThrottled($"[QuestModGUI] Clone missing CollectionListItem component");
                     UnityEngine.Object.Destroy(clone);
                     return null;
                 }
@@ -421,14 +483,14 @@ namespace MissionImpossible
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Error($"[QuestModGUI] Could not wire click listener: {ex.Message}");
+                    LogErrorThrottled($"[QuestModGUI] Could not wire click listener: {ex.Message}");
                 }
 
                 return cloneComp;
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in FindOrCreateQuestEntry: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in FindOrCreateQuestEntry: {ex.Message}");
                 return null;
             }
         }
@@ -469,7 +531,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
             }
         }
 
@@ -510,13 +572,14 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in OnQuestEntryClicked: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in OnQuestEntryClicked: {ex.Message}");
             }
         }
 
         // Shared "big icon" GameObject in the collection detail panel (right side of the collections screen).
         // Cached once by name lookup since it lives outside the per-row clones we create.
         private static Transform _bigIconTransform;
+        private static bool _bigIconSearchFailed;
 
         private static Transform FindChildByName(Transform root, string name)
         {
@@ -560,8 +623,12 @@ namespace MissionImpossible
 
                 // Big icon on the right side: hide only while a Quest entry is selected, restore for
                 // every other (non-quest) collections entry so real Notes/collectibles keep their icon (v1.4)
-                if (_bigIconTransform == null)
+                if (_bigIconTransform == null && !_bigIconSearchFailed)
+                {
                     _bigIconTransform = FindChildByName(panelLog.transform, "CollectibleImage_new");
+                    if (_bigIconTransform == null)
+                        _bigIconSearchFailed = true;
+                }
 
                 if (_bigIconTransform != null)
                 {
@@ -573,19 +640,18 @@ namespace MissionImpossible
                 if (questType == null)
                     return;
 
-                string name = $"{questType} Quests";
-                var summary = QuestMod.Instance.GetQuestSummary(questType);
-                string desc = !summary.enabled ? "Disabled" : BuildQuestObjectiveText(questType);
-
-                if (panelLog.m_CollectionsNameLabel != null)
-                    panelLog.m_CollectionsNameLabel.text = name;
-                if (panelLog.m_CollectionsDescLabel != null)
-                    panelLog.m_CollectionsDescLabel.text = desc;
+                SetLabelText(panelLog.m_CollectionsNameLabel, QuestTitle(questType));
+                SetLabelText(panelLog.m_CollectionsDescLabel, GetCachedDetailText(questType));
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestModGUI] Error in ApplyQuestDetailOverrideIfNeeded: {ex.Message}");
+                LogErrorThrottled($"[QuestModGUI] Error in ApplyQuestDetailOverrideIfNeeded: {ex.Message}");
             }
+        }
+
+        private static string QuestTitle(string questType)
+        {
+            return questType + " Quests";
         }
 
         private static string BuildQuestObjectiveText(string questType)

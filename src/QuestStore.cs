@@ -16,21 +16,27 @@ namespace MissionImpossible
         private readonly ModDataManager _modData = new ModDataManager("MissionImpossible", false);
         private bool _dirty;
 
+        // Increases whenever the quest data changes or is replaced; lets the journal rebuild its texts only when needed
+        public int Revision { get; private set; }
+
         public void MarkDirty()
         {
             _dirty = true;
+            Revision++;
         }
 
         // Forget unsaved changes (back in the main menu)
         public void Reset()
         {
             _dirty = false;
+            Revision++;
         }
 
         // Quest state of the active save; an empty state if the save has none yet
         public QuestState Load()
         {
             _dirty = false;
+            Revision++;
 
             try
             {

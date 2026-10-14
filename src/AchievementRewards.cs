@@ -19,10 +19,6 @@ namespace MissionImpossible
         private readonly Dictionary<string, AchievementRewardEntry> _achievementRewards =
             new Dictionary<string, AchievementRewardEntry>(StringComparer.OrdinalIgnoreCase);
 
-        // Rewards are queued from the unlock hook and handed out in OnUpdate, never inside the game's unlock call.
-        private readonly Queue<(string spawnName, int amount, string achievementName)> _pendingAchievementRewards =
-            new Queue<(string, int, string)>();
-
         // Reads the "achievements" section of GearLookup.json.
         private void ParseAchievementRewards(JsonElement root)
         {
@@ -98,25 +94,14 @@ namespace MissionImpossible
                 GearEntry reward = pool[_random.Next(pool.Count)];
                 int amount = _settings.ApplyRewardMultiplier(reward.reward_amount);
 
-                _pendingAchievementRewards.Enqueue((reward.spawn_name, amount, name));
+                // Only queued here; handed out from OnUpdate, never inside the game's unlock call
+                GrantRewardItems(reward.spawn_name, amount, "Achievement Reward");
                 MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} ({questType}) - reward queued: {amount}x {reward.spawn_name}");
             }
             catch (Exception ex)
             {
                 MelonLogger.Error($"[QuestMod] Error handling achievement unlock: {ex.Message}");
             }
-        }
-
-        private void ProcessPendingAchievementRewards()
-        {
-            if (_pendingAchievementRewards.Count == 0 || !IsInGameplayScene)
-                return;
-
-            if (GameManager.GetInventoryComponent() == null)
-                return;
-
-            var reward = _pendingAchievementRewards.Dequeue();
-            GrantRewardItems(reward.spawnName, reward.amount, "Achievement Reward");
         }
     }
 

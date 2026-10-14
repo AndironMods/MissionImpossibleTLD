@@ -82,6 +82,12 @@ namespace MissionImpossible
         // Quest data lives in the save game (ModData); loaded when a save is entered, dropped in the main menu
         private readonly QuestStore _store = new QuestStore();
         private string _loadedSaveName;
+        // Set when settings change while no save is loaded (main menu): the save loaded next gets fresh quests
+        private bool _regenerateOnNextLoad = false;
+        private float _nextSaveLoadCheck;
+        private float _saveLoadWaitSince = -1f;
+        private bool _saveLoadWaitLogged;
+        public int QuestDataRevision => _store.Revision;
         // Set once a "_DLC01" scene is seen loading - Unity can't load a scene that doesn't exist, so this is a
         // reliable signal that DLC content is installed. Detected again every game start (the main menu is a DLC scene).
         private bool _dlcDetected = false;
@@ -197,7 +203,11 @@ namespace MissionImpossible
             {
                 _trackedItemUnitsByName.Clear();
             }
-            _pendingAchievementRewards.Clear();
+            _rewardQueue.Clear();
+            _messagesAfterRewards.Clear();
+            _needsInitialQuestGeneration = false;
+            _saveLoadWaitSince = -1f;
+            _saveLoadWaitLogged = false;
         }
 
         // Loads the quest data of the active save the first time a gameplay scene is entered
@@ -206,15 +216,33 @@ namespace MissionImpossible
             if (_questState != null || !IsInGameplayScene)
                 return;
 
+            // The name is only needed until the data is loaded; asking once per second is plenty
+            if (Time.unscaledTime < _nextSaveLoadCheck)
+                return;
+            _nextSaveLoadCheck = Time.unscaledTime + 1f;
+
             string saveName = SaveGameSystem.GetCurrentSaveName();
             if (string.IsNullOrEmpty(saveName))
-                return;
+            {
+                if (_saveLoadWaitSince < 0f)
+                    _saveLoadWaitSince = Time.unscaledTime;
 
+                if (!_saveLoadWaitLogged && Time.unscaledTime - _saveLoadWaitSince > 10f)
+                {
+                    _saveLoadWaitLogged = true;
+                    MelonLogger.Warning("[QuestMod] The game reports no save game name - quests are loaded as soon as it does.");
+                }
+                return;
+            }
+
+            _saveLoadWaitSince = -1f;
+            _saveLoadWaitLogged = false;
             _loadedSaveName = saveName;
             _questState = _store.Load();
 
-            // A settings change made in the main menu also regenerates the quests of the save loaded next
-            _needsInitialQuestGeneration = _needsInitialQuestGeneration || _questState.ActiveQuests.Count == 0;
+            // A new save has no quests yet; a settings change made in the main menu also regenerates the quests of this save
+            _needsInitialQuestGeneration = _regenerateOnNextLoad || _questState.ActiveQuests.Count == 0;
+            _regenerateOnNextLoad = false;
 
             MelonLogger.Msg($"[QuestMod] Loaded quest data of save '{saveName}' - {_questState.ActiveQuests.Count} quests active");
         }
@@ -256,7 +284,7 @@ namespace MissionImpossible
         public override void OnUpdate()
         {
             EnsureSaveLoaded();
-            ProcessPendingAchievementRewards();
+            ProcessRewardQueue();
 
             // End suppress window, then seed tracking baseline once inventory has settled
             if (_suppressLogging && (DateTime.Now - _lastCheckTime).TotalSeconds > 5)
@@ -410,20 +438,9 @@ namespace MissionImpossible
                             MelonLogger.Msg($"[QuestMod] Item count decreased: '{GetDisplayName(key)}' {lastKnown} -> {currentTotal} (not counted)");
                         }
 
-                        // Re-read the true current total rather than reusing the value captured
-                        // at the top of this iteration: if a quest just completed above and its
-                        // RewardKey is this same item name (self-reward, or a duplicate CollectKey
-                        // across quests), GiveReward already synced the baseline to the correct
-                        // post-reward total - overwriting with the stale pre-reward value here
-                        // would make the reward units look like a fresh pickup next scan.
-                        try
-                        {
-                            _trackedItemUnitsByName[key] = GetTotalUnitsInInventory(inventory, key);
-                        }
-                        catch
-                        {
-                            _trackedItemUnitsByName[key] = currentTotal;
-                        }
+                        // Reward items are queued and sync their own baseline when they are handed out
+                        // (ProcessRewardQueue), so the total read at the top of this iteration is still correct here.
+                        _trackedItemUnitsByName[key] = currentTotal;
                     }
                 }
             }
@@ -720,8 +737,8 @@ namespace MissionImpossible
 
             if (_questState.ActiveQuests.Any(q => q.Type == questType && !quests.Contains(q)))
             {
-                try { HUDMessage.AddMessage($"New {questType.ToLowerInvariant()} quests created!", true); }
-                catch (Exception ex) { MelonLogger.Msg($"[QuestMod] Note: Could not display creation notification (non-critical): {ex.Message}"); }
+                // Shown after the rewards, which are handed out over the next frames
+                _messagesAfterRewards.Enqueue($"New {questType.ToLowerInvariant()} quests created!");
             }
         }
 
@@ -792,76 +809,128 @@ namespace MissionImpossible
             GrantRewardItems(quest.RewardKey, quest.RewardAmount, "Quest Reward");
         }
 
-        // Give the player reward items HANG PREVENTION: Uses locks but no file I/O, non-blocking
+        private class PendingReward
+        {
+            public string Key;
+            public int Remaining;
+            public int Given;
+            public string NotificationPrefix;
+        }
+
+        // Rewards are handed out a few items per frame so a large amount can't freeze the game
+        private const int REWARD_ITEMS_PER_FRAME = 5;
+        private readonly Queue<PendingReward> _rewardQueue = new Queue<PendingReward>();
+        // HUD messages that belong after the rewards have been handed out
+        private readonly Queue<string> _messagesAfterRewards = new Queue<string>();
+
+        // Queues reward items; ProcessRewardQueue hands them out from OnUpdate
         private void GrantRewardItems(string rewardKey, int rewardAmount, string notificationPrefix)
+        {
+            if (string.IsNullOrEmpty(rewardKey) || rewardAmount <= 0)
+                return;
+
+            _rewardQueue.Enqueue(new PendingReward { Key = rewardKey, Remaining = rewardAmount, NotificationPrefix = notificationPrefix });
+        }
+
+        private static void ShowHudMessage(string message)
         {
             try
             {
-                // CRASH FIX: Lock prevents console from accessing data while giving reward
-                lock (_dataLock)
+                HUDMessage.AddMessage(message, true);
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Msg($"[QuestMod] Note: Could not display notification (non-critical): {ex.Message}");
+            }
+        }
+
+        // HANG PREVENTION: at most REWARD_ITEMS_PER_FRAME items per frame, no file I/O
+        private void ProcessRewardQueue()
+        {
+            if (_rewardQueue.Count == 0 && _messagesAfterRewards.Count == 0)
+                return;
+
+            if (!IsInGameplayScene)
+                return;
+
+            try
+            {
+                if (_rewardQueue.Count > 0)
                 {
                     var inventory = GameManager.GetInventoryComponent();
                     if (inventory == null)
-                    {
-                        MelonLogger.Error("[QuestMod] Inventory component is null!");
                         return;
-                    }
 
-                    int successCount = 0;
-                    
-                    for (int i = 0; i < rewardAmount; i++)
+                    lock (_dataLock)
                     {
-                        GearItem rewardItem = GearItem.InstantiateGearItem(rewardKey);
-                        if (rewardItem != null)
+                        int budget = REWARD_ITEMS_PER_FRAME;
+                        while (budget > 0 && _rewardQueue.Count > 0)
                         {
-                            inventory.AddGear(rewardItem);
-                            successCount++;
-                        }
-                        else
-                        {
-                            MelonLogger.Error($"[QuestMod] Failed to instantiate reward item: {rewardKey} ({GetDisplayName(rewardKey)})");
-                        }
-                    }
+                            PendingReward reward = _rewardQueue.Peek();
+                            int batch = Math.Min(budget, reward.Remaining);
+                            int added = 0;
 
-                    // Sync the tracking baseline for the reward item to its new true count.
-                    // Without this, the next scan tick would see the reward units as a fresh
-                    // "pickup" and credit them toward ANY active quest matching RewardKey
-                    // (including a different quest that just happens to want the same item) -
-                    // rewards should never count as collection progress.
-                    if (successCount > 0)
-                    {
-                        try
-                        {
-                            lock (_trackingLock)
+                            for (int i = 0; i < batch; i++)
                             {
-                                _trackedItemUnitsByName[rewardKey] = GetTotalUnitsInInventory(inventory, rewardKey);
+                                GearItem rewardItem = GearItem.InstantiateGearItem(reward.Key);
+                                if (rewardItem != null)
+                                {
+                                    inventory.AddGear(rewardItem);
+                                    added++;
+                                }
+                            }
+
+                            reward.Remaining -= batch;
+                            reward.Given += added;
+                            budget -= batch;
+
+                            if (added < batch)
+                                MelonLogger.Error($"[QuestMod] Failed to instantiate reward item: {reward.Key} ({GetDisplayName(reward.Key)})");
+
+                            // Sync the tracking baseline for the reward item to its new true count.
+                            // Without this, the next scan tick would see the reward units as a fresh
+                            // "pickup" and credit them toward ANY active quest matching the reward item.
+                            if (added > 0)
+                            {
+                                try
+                                {
+                                    lock (_trackingLock)
+                                    {
+                                        _trackedItemUnitsByName[reward.Key] = GetTotalUnitsInInventory(inventory, reward.Key);
+                                    }
+                                }
+                                catch (Exception trackEx)
+                                {
+                                    MelonLogger.Error($"[QuestMod] Error syncing reward tracking baseline: {trackEx.Message}");
+                                }
+                            }
+
+                            if (reward.Remaining <= 0)
+                            {
+                                _rewardQueue.Dequeue();
+
+                                if (reward.Given > 0)
+                                {
+                                    ShowHudMessage($"{reward.NotificationPrefix}: {reward.Given}x {GetDisplayName(reward.Key)}");
+                                    MelonLogger.Msg($"[QuestMod] Reward notification displayed: {reward.Given}x {GetDisplayName(reward.Key)}");
+                                }
                             }
                         }
-                        catch (Exception trackEx)
-                        {
-                            MelonLogger.Error($"[QuestMod] Error syncing reward tracking baseline: {trackEx.Message}");
-                        }
                     }
+                }
 
-                    string rewardDisplay = $"{successCount} {rewardKey}";
-                    
-                    // Display reward notification using HUDMessage (works everywhere, indoor/outdoor)
-                    try
-                    {
-                        if (successCount > 0)
-                        {
-                            HUDMessage.AddMessage($"{notificationPrefix}: {successCount}x {GetDisplayName(rewardKey)}", true);
-                            MelonLogger.Msg($"[QuestMod] Reward notification displayed: {successCount}x {GetDisplayName(rewardKey)}");
-                        }
-                    }
-                    catch (Exception displayEx)
-                    {
-                        MelonLogger.Msg($"[QuestMod] Note: Could not display reward notification (non-critical): {displayEx.Message}");
-                    }
+                if (_rewardQueue.Count == 0)
+                {
+                    while (_messagesAfterRewards.Count > 0)
+                        ShowHudMessage(_messagesAfterRewards.Dequeue());
                 }
             }
             catch (Exception ex)
             {
+                // Drop the reward that failed, otherwise it would fail again every frame
+                if (_rewardQueue.Count > 0)
+                    _rewardQueue.Dequeue();
+
                 MelonLogger.Error($"[QuestMod] Error giving reward: {ex.Message}");
                 MelonLogger.Error($"[QuestMod] Stack trace: {ex.StackTrace}");
             }
@@ -899,7 +968,14 @@ namespace MissionImpossible
             // of generating with placeholder/main-menu day-1 data - confirmed via testing that
             // TOD can be non-null at the main menu but still report day=1,hour=0 instead of
             // the real save's data, only becoming accurate once actually loaded into a save.
-            if (TOD == null || !IsInGameplayScene || _questState == null)
+            if (_questState == null)
+            {
+                _regenerateOnNextLoad = true;
+                MelonLogger.Msg("[QuestMod] No save loaded - quests are regenerated as soon as a save is loaded");
+                return;
+            }
+
+            if (TOD == null || !IsInGameplayScene)
             {
                 _needsInitialQuestGeneration = true;
                 MelonLogger.Msg("[QuestMod] Not in a gameplay scene yet - deferring quest regeneration until we are");
@@ -1098,7 +1174,7 @@ namespace MissionImpossible
                             // can decline to complete (e.g. a guard/cooldown), so don't assume it worked
                             if (verbose && quest.Status == "Complete")
                             {
-                                MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete! Reward given.");
+                                MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete! Reward queued.");
                             }
                         }
 
@@ -1178,17 +1254,34 @@ namespace MissionImpossible
             return data;
         }
 
-        // Real, current-language display name for a spawn_name (e.g. "GEAR_CookedBannock" ->
-        // the game's own localized name for that item, in whatever language the player has
-        // selected). Resolved via the item's GearItemData.DisplayName, which wraps a Unity
-        // LocalizedString and re-resolves against the active locale on every read - no
-        // language-change handling needed on our side.
-        // Falls back to the JSON-key name, then to stripping "GEAR_", if live resolution fails
-        // (e.g. an unrecognized spawn_name, or called before the asset system is ready).
+        private readonly HashSet<string> _nameChecked = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+
+        // Real, current-language display name for a spawn_name (e.g. "GEAR_CookedBannock" -> the game's own
+        // localized name for that item). Resolved with the game's own lookup (GearItem.GetGearDisplayName), which
+        // creates no object. Falls back to briefly instantiating the item, then to the JSON-key name, then to
+        // stripping "GEAR_" (e.g. an unrecognized spawn_name, or called before the asset system is ready).
         public string GetDisplayName(string spawnName)
         {
             if (string.IsNullOrEmpty(spawnName))
                 return spawnName;
+
+            try
+            {
+                string fast = GearItem.GetGearDisplayName(spawnName);
+                if (!string.IsNullOrEmpty(fast) && !fast.Equals(spawnName, StringComparison.OrdinalIgnoreCase)
+                    && !fast.StartsWith("GAMEPLAY_", StringComparison.Ordinal) && !fast.StartsWith("GEAR_", StringComparison.Ordinal))
+                {
+                    if (_settings != null && _settings.EnablePickupLogging && _nameChecked.Add(spawnName))
+                        LogNameCheck(spawnName, fast);
+
+                    return fast;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (_nameChecked.Add(spawnName))
+                    MelonLogger.Warning($"[QuestMod] GetGearDisplayName failed for '{spawnName}': {ex.Message}");
+            }
 
             try
             {
@@ -1209,6 +1302,21 @@ namespace MissionImpossible
                 return jsonName;
 
             return spawnName.StartsWith("GEAR_") ? spawnName.Substring(5) : spawnName;
+        }
+
+        // Logging only: compares the game's lookup with the name read from an instantiated item, once per item
+        private void LogNameCheck(string spawnName, string fast)
+        {
+            try
+            {
+                string slow = GetGearItemDataFor(spawnName)?.DisplayName;
+                string verdict = string.Equals(fast, slow, StringComparison.Ordinal) ? "MATCH" : "DIFFERENT";
+                MelonLogger.Msg($"[QuestMod] Name check '{spawnName}': lookup='{fast}' instantiated='{slow}' -> {verdict}");
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Warning($"[QuestMod] Name check failed for '{spawnName}': {ex.Message}");
+            }
         }
 
         // Get the ShowReward setting from mod settings. Used by QuestModGUI to determine if rewards should be visible or hidden as *****.
