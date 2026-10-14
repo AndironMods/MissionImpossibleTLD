@@ -24,41 +24,27 @@ namespace MissionImpossible
         private readonly Queue<(string spawnName, int amount, string achievementName)> _pendingAchievementRewards =
             new Queue<(string, int, string)>();
 
-        private string AchievementLookupPath =>
-            Path.Combine(Directory.GetCurrentDirectory(), "Mods", "AchievementLookup.json");
-
-        private void LoadAchievementLookup()
+        // Reads the "achievements" section of GearLookup.json.
+        private void ParseAchievementRewards(JsonElement root)
         {
             _achievementRewards.Clear();
 
-            if (!File.Exists(AchievementLookupPath))
+            if (!root.TryGetProperty("achievements", out JsonElement section))
             {
-                MelonLogger.Warning($"[QuestMod] AchievementLookup.json not found at {AchievementLookupPath} - achievement rewards disabled.");
+                MelonLogger.Warning("[QuestMod] No \"achievements\" section in GearLookup.json - achievement rewards disabled.");
                 return;
             }
 
-            try
+            foreach (JsonProperty item in section.EnumerateObject())
             {
-                using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(AchievementLookupPath));
-
-                if (doc.RootElement.TryGetProperty("achievements", out JsonElement section))
+                _achievementRewards[item.Name] = new AchievementRewardEntry
                 {
-                    foreach (JsonProperty item in section.EnumerateObject())
-                    {
-                        _achievementRewards[item.Name] = new AchievementRewardEntry
-                        {
-                            quest_type = item.Value.GetProperty("quest_type").GetString(),
-                            enabled = item.Value.GetProperty("enabled").GetBoolean()
-                        };
-                    }
-                }
+                    quest_type = item.Value.GetProperty("quest_type").GetString(),
+                    enabled = item.Value.GetProperty("enabled").GetBoolean()
+                };
+            }
 
-                MelonLogger.Msg($"[QuestMod] Loaded {_achievementRewards.Count} achievement reward entries");
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestMod] Error loading AchievementLookup: {ex.Message}");
-            }
+            MelonLogger.Msg($"[QuestMod] Loaded {_achievementRewards.Count} achievement reward entries");
         }
 
         private static bool IsQuestType(string value)

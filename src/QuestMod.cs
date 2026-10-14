@@ -143,7 +143,6 @@ namespace MissionImpossible
 
             // Load data
             LoadLookup();
-            LoadAchievementLookup();
             LoadData();
 
             // Initialize GUI system to display quests in Journal/Collections
@@ -1081,6 +1080,8 @@ namespace MissionImpossible
                 }
 
                 MelonLogger.Msg($"[QuestMod] Loaded {_lookup.items_to_collect.Count} collect items and {_lookup.items_as_reward.Count} reward items");
+
+                ParseAchievementRewards(root);
             }
             catch (Exception ex)
             {

@@ -47,7 +47,7 @@ When each period ends (tomorrow, next week, next month), you automatically recei
 - Unlock a Steam achievement (base game or DLC) and you get a reward on top
 - Every achievement is tagged daily, weekly or monthly: small, medium or best rewards from the quest reward pools
 - Wintermute story achievements are not included
-- Can be switched off in the Mod Settings, the daily/weekly/monthly tag of each achievement can be changed in AchievementLookup.json
+- Can be switched off in the Mod Settings, the daily/weekly/monthly tag of each achievement can be changed at the end of GearLookup.json
 
 ### Easy Customization
 - **Choose how many quests you want** - Want 3 daily quests instead of 1? Easy!
@@ -76,7 +76,6 @@ When each period ends (tomorrow, next week, next month), you automatically recei
    Your folder should look like this:
    - MissionImpossible.dll
    - GearLookup.json
-   - AchievementLookup.json
 
 5. **Launch game** - Mod loads automatically  
 

@@ -41,7 +41,6 @@ jobs:
         mkdir release
         copy bin\Release\net6.0\MissionImpossible.dll release\
         copy src\GearLookup.json release\
-        copy src\AchievementLookup.json release\
         copy README.md release\
         copy CHANGELOG.md release\
 
