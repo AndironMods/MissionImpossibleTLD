@@ -268,6 +268,8 @@ namespace MissionImpossible
         // Main loop: quest resets, stack detection, deferred saves (all non-blocking)
         public override void OnUpdate()
         {
+            AchievementProbe.Tick();
+
             // End suppress window, then seed tracking baseline once inventory has settled
             if (_suppressLogging && (DateTime.Now - _lastCheckTime).TotalSeconds > 5)
             {
