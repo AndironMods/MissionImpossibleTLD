@@ -309,58 +309,12 @@ namespace MissionImpossible
                 }
             }
 
-            // F2: Complete all daily quests (debug command - only active when logging is enabled)
-            if (Input.GetKeyDown(KeyCode.F2) && _modSettingsAvailable && _settings.EnablePickupLogging)
+            // F2/F3/F4: Complete all daily/weekly/monthly quests (debug commands - only active when logging is enabled)
+            if (_modSettingsAvailable && _settings.EnablePickupLogging)
             {
-                var dailyQuests = _questState.ActiveQuests.Where(q => q.Type == "Daily").ToList();
-                if (dailyQuests.Count > 0)
-                {
-                    MelonLogger.Msg($"[QuestMod] All Daily Quests completed!");
-                    
-                    int questNumber = 1;
-                    foreach (var quest in dailyQuests)
-                    {
-                        quest.CurrentAmount = quest.RequiredAmount;
-                        CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
-                        questNumber++;
-                    }
-                }
-            }
-
-            // F3: Complete all weekly quests (debug command - only active when logging is enabled)
-            if (Input.GetKeyDown(KeyCode.F3) && _modSettingsAvailable && _settings.EnablePickupLogging)
-            {
-                var weeklyQuests = _questState.ActiveQuests.Where(q => q.Type == "Weekly").ToList();
-                if (weeklyQuests.Count > 0)
-                {
-                    MelonLogger.Msg($"[QuestMod] All Weekly Quests completed!");
-                    
-                    int questNumber = 1;
-                    foreach (var quest in weeklyQuests)
-                    {
-                        quest.CurrentAmount = quest.RequiredAmount;
-                        CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
-                        questNumber++;
-                    }
-                }
-            }
-
-            // F4: Complete all monthly quests (debug command - only active when logging is enabled)
-            if (Input.GetKeyDown(KeyCode.F4) && _modSettingsAvailable && _settings.EnablePickupLogging)
-            {
-                var monthlyQuests = _questState.ActiveQuests.Where(q => q.Type == "Monthly").ToList();
-                if (monthlyQuests.Count > 0)
-                {
-                    MelonLogger.Msg($"[QuestMod] All Monthly Quests completed!");
-                    
-                    int questNumber = 1;
-                    foreach (var quest in monthlyQuests)
-                    {
-                        quest.CurrentAmount = quest.RequiredAmount;
-                        CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
-                        questNumber++;
-                    }
-                }
+                if (Input.GetKeyDown(KeyCode.F2)) CompleteAllQuestsDebug("Daily");
+                if (Input.GetKeyDown(KeyCode.F3)) CompleteAllQuestsDebug("Weekly");
+                if (Input.GetKeyDown(KeyCode.F4)) CompleteAllQuestsDebug("Monthly");
             }
 
             // Check for quest resets every QUEST_CHECK_INTERVAL_SECONDS
@@ -757,7 +711,33 @@ namespace MissionImpossible
 
             if (showCreationLog && successCount > 0)
             {
-                HUDMessage.AddMessage($"{successCount} new {questType} Quests created", true);
+                HUDMessage.AddMessage($"New {questType.ToLowerInvariant()} quests created!", true);
+            }
+        }
+
+        // Debug: complete every active quest of a type at once, then show one summary and one "new quests" message
+        private void CompleteAllQuestsDebug(string questType)
+        {
+            var quests = _questState.ActiveQuests.Where(q => q.Type == questType).ToList();
+            if (quests.Count == 0)
+                return;
+
+            MelonLogger.Msg($"[QuestMod] All {questType} Quests completed!");
+            try { HUDMessage.AddMessage($"All {questType.ToLowerInvariant()} quests completed!", true); }
+            catch (Exception ex) { MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {ex.Message}"); }
+
+            int questNumber = 1;
+            foreach (var quest in quests)
+            {
+                quest.CurrentAmount = quest.RequiredAmount;
+                CheckAndCompleteQuest(quest, isDebugCommand: true, questNumber: questNumber);
+                questNumber++;
+            }
+
+            if (_questState.ActiveQuests.Any(q => q.Type == questType && !quests.Contains(q)))
+            {
+                try { HUDMessage.AddMessage($"New {questType.ToLowerInvariant()} quests created!", true); }
+                catch (Exception ex) { MelonLogger.Msg($"[QuestMod] Note: Could not display creation notification (non-critical): {ex.Message}"); }
             }
         }
 
@@ -781,14 +761,20 @@ namespace MissionImpossible
                 // Calculate progress: how many completed vs target
                 int completedCount = _questState.ActiveQuests.Count(q => q.Type == quest.Type && q.Status == "Complete") + 1;
 
-                // Display objective completion notification with progress
-                try
+                // Debug commands show one "All ... completed" message for the whole batch instead
+                if (!isDebugCommand)
                 {
-                    HUDMessage.AddMessage($"{completedCount}/{targetCount} {quest.Type} Quest completed!", true);
-                }
-                catch (Exception displayEx)
-                {
-                    MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {displayEx.Message}");
+                    try
+                    {
+                        string completionMessage = targetCount > 0 && completedCount >= targetCount
+                            ? $"All {quest.Type.ToLowerInvariant()} quests completed!"
+                            : $"{completedCount}/{targetCount} {quest.Type} Quests completed!";
+                        HUDMessage.AddMessage(completionMessage, true);
+                    }
+                    catch (Exception displayEx)
+                    {
+                        MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {displayEx.Message}");
+                    }
                 }
                 
                 // Mark quest as completed (keep in list, don't remove)
