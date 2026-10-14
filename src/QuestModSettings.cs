@@ -93,6 +93,11 @@ namespace MissionImpossible
         // mod detects the DLC is installed (see QuestMod.CheckForDlcAutoEnable), and force-
         // disabled if it isn't. There is nothing for the player to configure here.
 
+        // ==================== ACHIEVEMENT REWARDS ====================
+        [Name("Achievement Rewards")]
+        [Description("Receive a reward when you unlock a Steam achievement (base game and DLC)")]
+        public bool EnableAchievementRewards = true;
+
         // ==================== DISPLAY & LOGGING SETTINGS ====================
         [Name("Show Reward")]
         [Description("Show reward in GUI (hide if disabled)")]

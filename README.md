@@ -43,6 +43,12 @@ When each period ends (tomorrow, next week, next month), you automatically recei
 - Didn't finish? No punishment - a new quest just generates
 - Rewards scale to your difficulty (easier difficulties = more generous rewards)
 
+### Achievement Rewards
+- Unlock a Steam achievement (base game or DLC) and you get a reward on top
+- Easier achievements give daily-quest rewards, harder ones weekly or monthly rewards
+- Wintermute story achievements are not included
+- Can be switched off in the Mod Settings, tiers can be changed in AchievementLookup.json
+
 ### Easy Customization
 - **Choose how many quests you want** - Want 3 daily quests instead of 1? Easy!
 - **Adjust difficulty scaling** - Make quests easier or harder
@@ -70,6 +76,7 @@ When each period ends (tomorrow, next week, next month), you automatically recei
    Your folder should look like this:
    - MissionImpossible.dll
    - GearLookup.json
+   - AchievementLookup.json
 
 5. **Launch game** - Mod loads automatically  
 

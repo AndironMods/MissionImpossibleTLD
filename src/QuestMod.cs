@@ -56,7 +56,7 @@ namespace MissionImpossible
         public bool DlcAutoDetected { get; set; } = false;
     }
 
-    public class QuestMod : MelonMod
+    public partial class QuestMod : MelonMod
     {
         public static QuestMod Instance { get; private set; }
 
@@ -143,6 +143,7 @@ namespace MissionImpossible
 
             // Load data
             LoadLookup();
+            LoadAchievementLookup();
             LoadData();
 
             // Initialize GUI system to display quests in Journal/Collections
@@ -215,7 +216,6 @@ namespace MissionImpossible
             _lastCheckTime = DateTime.Now;
 
             CheckForDlcAutoEnable(sceneName);
-            AchievementProbe.OnSceneLoaded(sceneName);
         }
 
         // A "_DLC01" scene can only load if the DLC is installed - Unity can't load a scene
@@ -268,7 +268,7 @@ namespace MissionImpossible
         // Main loop: quest resets, stack detection, deferred saves (all non-blocking)
         public override void OnUpdate()
         {
-            AchievementProbe.Tick();
+            ProcessPendingAchievementRewards();
 
             // End suppress window, then seed tracking baseline once inventory has settled
             if (_suppressLogging && (DateTime.Now - _lastCheckTime).TotalSeconds > 5)
@@ -818,8 +818,13 @@ namespace MissionImpossible
             }
         }
 
-        // Give the player their quest reward items HANG PREVENTION: Uses locks but no file I/O, non-blocking
         private void GiveReward(Quest quest, int questNumber = 0)
+        {
+            GrantRewardItems(quest.RewardKey, quest.RewardAmount, "Quest Reward");
+        }
+
+        // Give the player reward items HANG PREVENTION: Uses locks but no file I/O, non-blocking
+        private void GrantRewardItems(string rewardKey, int rewardAmount, string notificationPrefix)
         {
             try
             {
@@ -835,9 +840,9 @@ namespace MissionImpossible
 
                     int successCount = 0;
                     
-                    for (int i = 0; i < quest.RewardAmount; i++)
+                    for (int i = 0; i < rewardAmount; i++)
                     {
-                        GearItem rewardItem = GearItem.InstantiateGearItem(quest.RewardKey);
+                        GearItem rewardItem = GearItem.InstantiateGearItem(rewardKey);
                         if (rewardItem != null)
                         {
                             inventory.AddGear(rewardItem);
@@ -845,7 +850,7 @@ namespace MissionImpossible
                         }
                         else
                         {
-                            MelonLogger.Error($"[QuestMod] Failed to instantiate reward item: {quest.RewardKey} ({GetDisplayName(quest.RewardKey)})");
+                            MelonLogger.Error($"[QuestMod] Failed to instantiate reward item: {rewardKey} ({GetDisplayName(rewardKey)})");
                         }
                     }
 
@@ -860,7 +865,7 @@ namespace MissionImpossible
                         {
                             lock (_trackingLock)
                             {
-                                _trackedItemUnitsByName[quest.RewardKey] = GetTotalUnitsInInventory(inventory, quest.RewardKey);
+                                _trackedItemUnitsByName[rewardKey] = GetTotalUnitsInInventory(inventory, rewardKey);
                             }
                         }
                         catch (Exception trackEx)
@@ -869,15 +874,15 @@ namespace MissionImpossible
                         }
                     }
 
-                    string rewardDisplay = $"{successCount} {quest.RewardKey}";
+                    string rewardDisplay = $"{successCount} {rewardKey}";
                     
                     // Display reward notification using HUDMessage (works everywhere, indoor/outdoor)
                     try
                     {
                         if (successCount > 0)
                         {
-                            HUDMessage.AddMessage($"Quest Reward: {successCount}x {GetDisplayName(quest.RewardKey)}", true);
-                            MelonLogger.Msg($"[QuestMod] Reward notification displayed: {successCount}x {GetDisplayName(quest.RewardKey)}");
+                            HUDMessage.AddMessage($"{notificationPrefix}: {successCount}x {GetDisplayName(rewardKey)}", true);
+                            MelonLogger.Msg($"[QuestMod] Reward notification displayed: {successCount}x {GetDisplayName(rewardKey)}");
                         }
                     }
                     catch (Exception displayEx)

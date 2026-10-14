@@ -1,0 +1,218 @@
+{
+  "_info": {
+    "description": "Rewards for Steam achievements (Mission Impossible). Keys are the game's achievement names (identical to the Steam API names).",
+    "how_it_works": "When an achievement is newly unlocked, one random reward item is picked from the reward pool of the tier's quest type: easy = daily, medium = weekly, hard = monthly (see items_as_reward in GearLookup.json). Reward amounts follow the quest reward amounts and the difficulty setting.",
+    "tiers": "easy | medium | hard",
+    "how_to_customize": "Change the tier of an achievement, or set enabled to false to give no reward for it. Achievements that are not listed here (e.g. Wintermute story achievements) give no reward."
+  },
+  "achievements": {
+    "Survival_1_Days": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Survival_1_Night": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Survival_3_Nights": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Survival_10_Days": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Wrapped_Fur": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Big_Fish": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "Harvest_10_Deer": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Natural_Healer": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Happy_Harvester": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Living_Off_Land": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "LakeCoastalInteriors": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "WellNourished": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "StoneAgeSniper": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "TasteTheImpossible": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "SkilledSurvivor": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Survival_50_Days": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "NoGun_50_Days": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "NoKill_25_Days": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "ResoluteOutfitter": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "ThereWillBeBlood": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "SomethingWicked": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "ExpertAngler": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "BrokenBody": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "TackleBox": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Hotshot": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DownBelow": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "Survival_100_Days": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "Survival_500_Days": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "PenitentScholar": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "FaithfulCartographer": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "TimberwolfMountain": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "DesolationPoint": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "DeepForest": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "ChallengeMastery": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "ThanksForTheMemories": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "SM_UnlockAllMiltonDepositBoxes": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "SM_FoundAllForestTalkerCaches": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "SM_FoundAllHiddenCaches": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "SM_TallTales": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "SM_FoundAllPVCollectibles": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "DLC01_SomethingWarmToDrink": {
+      "tier": "easy",
+      "enabled": true
+    },
+    "DLC01_TooGreedilyTooDeep": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_ToTheTeeth": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_TastingMenu": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_RudigersDream": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_QuickDraw": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_Exposure": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_ShutterBug": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_OnTheLookout": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_GoodAndServices": {
+      "tier": "medium",
+      "enabled": true
+    },
+    "DLC01_EndOfTheEarth": {
+      "tier": "hard",
+      "enabled": true
+    },
+    "DLC01_ToughEnough": {
+      "tier": "hard",
+      "enabled": true
+    }
+  }
+}
