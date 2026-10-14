@@ -45,9 +45,9 @@ When each period ends (tomorrow, next week, next month), you automatically recei
 
 ### Achievement Rewards
 - Unlock a Steam achievement (base game or DLC) and you get a reward on top
-- Easier achievements give daily-quest rewards, harder ones weekly or monthly rewards
+- The reward is a random item from the reward pool of the quests
 - Wintermute story achievements are not included
-- Can be switched off in the Mod Settings, tiers can be changed in AchievementLookup.json
+- Can be switched off in the Mod Settings, single achievements can be disabled in AchievementLookup.json
 
 ### Easy Customization
 - **Choose how many quests you want** - Want 3 daily quests instead of 1? Easy!
