@@ -19,8 +19,12 @@ namespace MissionImpossible
 
         public static void OnSceneLoaded(string sceneName)
         {
-            bool isMenu = string.Equals(sceneName, "MainMenu", StringComparison.OrdinalIgnoreCase)
-                          || string.Equals(sceneName, "Boot", StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrEmpty(sceneName)
+                || string.Equals(sceneName, "Empty", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(sceneName, "Boot", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            bool isMenu = sceneName.StartsWith("MainMenu", StringComparison.OrdinalIgnoreCase);
 
             if (isMenu)
             {
@@ -56,6 +60,7 @@ namespace MissionImpossible
 
                 var names = Enum.GetNames(typeof(Achievement));
                 int count = 0;
+                bool steamErrorLogged = false;
                 foreach (string name in names)
                 {
                     Achievement ach = (Achievement)Enum.Parse(typeof(Achievement), name);
@@ -63,7 +68,14 @@ namespace MissionImpossible
                     bool steamValid = false;
                     bool steamUnlocked = false;
                     try { steamValid = SteamUserStats.GetAchievement(name, out steamUnlocked); }
-                    catch (Exception ex) { MelonLogger.Warning($"[AchievementProbe] Steam lookup failed for '{name}': {ex.Message}"); }
+                    catch (Exception ex)
+                    {
+                        if (!steamErrorLogged)
+                        {
+                            steamErrorLogged = true;
+                            MelonLogger.Warning($"[AchievementProbe] Steam lookup failed (further errors suppressed): {ex.Message}");
+                        }
+                    }
 
                     bool platformUnlocked = false;
                     try { platformUnlocked = AchievementPlatformManager.IsUnlocked(ach); }
