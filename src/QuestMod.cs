@@ -215,6 +215,7 @@ namespace MissionImpossible
             _lastCheckTime = DateTime.Now;
 
             CheckForDlcAutoEnable(sceneName);
+            AchievementProbe.OnSceneLoaded(sceneName);
         }
 
         // A "_DLC01" scene can only load if the DLC is installed - Unity can't load a scene

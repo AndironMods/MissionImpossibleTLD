@@ -50,6 +50,11 @@
       <Private>false</Private>
     </Reference>
 
+    <Reference Include="Il2Cppcom.rlabrecque.steamworks.net">
+      <HintPath>MelonLoader_Libs\Il2Cppcom.rlabrecque.steamworks.net.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
     <Reference Include="Il2CppInterop.Runtime">
       <HintPath>MelonLoader_Libs\Il2CppInterop.Runtime.dll</HintPath>
       <Private>false</Private>
