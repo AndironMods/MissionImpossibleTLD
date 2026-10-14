@@ -87,7 +87,7 @@
       "enabled": true
     },
     "SomethingWicked": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "ExpertAngler": {
@@ -95,7 +95,7 @@
       "enabled": true
     },
     "BrokenBody": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "TackleBox": {
@@ -146,28 +146,8 @@
       "quest_type": "monthly",
       "enabled": true
     },
-    "SM_UnlockAllMiltonDepositBoxes": {
-      "quest_type": "monthly",
-      "enabled": true
-    },
-    "SM_FoundAllForestTalkerCaches": {
-      "quest_type": "monthly",
-      "enabled": true
-    },
-    "SM_FoundAllHiddenCaches": {
-      "quest_type": "monthly",
-      "enabled": true
-    },
-    "SM_TallTales": {
-      "quest_type": "monthly",
-      "enabled": true
-    },
-    "SM_FoundAllPVCollectibles": {
-      "quest_type": "monthly",
-      "enabled": true
-    },
     "DLC01_SomethingWarmToDrink": {
-      "quest_type": "daily",
+      "quest_type": "weekly",
       "enabled": true
     },
     "DLC01_TooGreedilyTooDeep": {
@@ -175,15 +155,15 @@
       "enabled": true
     },
     "DLC01_ToTheTeeth": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "DLC01_TastingMenu": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "DLC01_RudigersDream": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "DLC01_QuickDraw": {
@@ -191,11 +171,11 @@
       "enabled": true
     },
     "DLC01_Exposure": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "DLC01_ShutterBug": {
-      "quest_type": "weekly",
+      "quest_type": "monthly",
       "enabled": true
     },
     "DLC01_OnTheLookout": {
