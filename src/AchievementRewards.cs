@@ -11,6 +11,7 @@ namespace MissionImpossible
 {
     public class AchievementRewardEntry
     {
+        public string quest_type { get; set; }
         public bool enabled { get; set; }
     }
 
@@ -46,6 +47,7 @@ namespace MissionImpossible
                     {
                         _achievementRewards[item.Name] = new AchievementRewardEntry
                         {
+                            quest_type = item.Value.GetProperty("quest_type").GetString(),
                             enabled = item.Value.GetProperty("enabled").GetBoolean()
                         };
                     }
@@ -57,6 +59,13 @@ namespace MissionImpossible
             {
                 MelonLogger.Error($"[QuestMod] Error loading AchievementLookup: {ex.Message}");
             }
+        }
+
+        private static bool IsQuestType(string value)
+        {
+            return string.Equals(value, "daily", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "weekly", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "monthly", StringComparison.OrdinalIgnoreCase);
         }
 
         internal void OnAchievementUnlocked(Achievement achievement)
@@ -73,27 +82,34 @@ namespace MissionImpossible
                 if (_lookup?.items_as_reward == null)
                     return;
 
+                if (!IsQuestType(entry.quest_type))
+                {
+                    MelonLogger.Warning($"[QuestMod] Achievement '{name}' has unknown quest_type '{entry.quest_type}' (use daily, weekly or monthly) - no reward.");
+                    return;
+                }
+
                 List<string> allowedCategories = _settings.GetAllowedCategories();
                 if (_questState != null && _questState.DlcAutoDetected)
                     allowedCategories.Add("DLC");
 
                 var pool = _lookup.items_as_reward
-                    .Select(kvp => kvp.Value.Where(v => v.enabled && allowedCategories.Contains(v.category)).ToList())
-                    .Where(variants => variants.Count > 0)
+                    .Select(kvp => kvp.Value.FirstOrDefault(v => v.enabled
+                        && v.quest_type.Equals(entry.quest_type, StringComparison.OrdinalIgnoreCase)
+                        && allowedCategories.Contains(v.category)))
+                    .Where(v => v != null)
                     .ToList();
 
                 if (pool.Count == 0)
                 {
-                    MelonLogger.Warning($"[QuestMod] No reward items available for achievement '{name}'.");
+                    MelonLogger.Warning($"[QuestMod] No {entry.quest_type} reward items available for achievement '{name}'.");
                     return;
                 }
 
-                var variantsOfItem = pool[_random.Next(pool.Count)];
-                GearEntry reward = variantsOfItem[_random.Next(variantsOfItem.Count)];
+                GearEntry reward = pool[_random.Next(pool.Count)];
                 int amount = _settings.ApplyRewardMultiplier(reward.reward_amount);
 
                 _pendingAchievementRewards.Enqueue((reward.spawn_name, amount, name));
-                MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} - reward queued: {amount}x {reward.spawn_name}");
+                MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} ({entry.quest_type}) - reward queued: {amount}x {reward.spawn_name}");
             }
             catch (Exception ex)
             {
