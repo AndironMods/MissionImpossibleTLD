@@ -1,7 +1,7 @@
 {
   "_info": {
       "description": "Quest System Configuration for Mission Impossible Mod",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "difficulty_modifiers": {
         "Easy (Pilgrim)": {
           "required_multiplier": "0.5x",
