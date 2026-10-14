@@ -30,6 +30,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="ModData">
+      <HintPath>MelonLoader_Libs\ModData.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
     <Reference Include="ModSettings">
     <HintPath>MelonLoader_Libs\ModSettings.dll</HintPath>
     <Private>False</Private>

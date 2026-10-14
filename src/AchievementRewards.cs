@@ -79,7 +79,7 @@ namespace MissionImpossible
                 string questType = entry.enabledQuestTypes[_random.Next(entry.enabledQuestTypes.Count)];
 
                 List<string> allowedCategories = _settings.GetAllowedCategories();
-                if (_questState != null && _questState.DlcAutoDetected)
+                if (_dlcDetected)
                     allowedCategories.Add("DLC");
 
                 var pool = _lookup.items_as_reward

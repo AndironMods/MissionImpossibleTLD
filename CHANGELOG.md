@@ -2,6 +2,9 @@
 
 * Remove background icon on the right side in Quest GUI
 * Update GearLookup.json to be more balanced
+* Add achievement rewards: unlocking a Steam achievement (base game and DLC) gives a reward, configured at the end of GearLookup.json
+* Quest data is now stored inside the save game with ModData (ModData is required): every save has its own quests, loading an older save restores its quests
+* New messages: "New daily quests created!", "All daily quests completed!" (also weekly/monthly)
 
 
 

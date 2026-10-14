@@ -66,10 +66,13 @@ When each period ends (tomorrow, next week, next month), you automatically recei
 2. **Download ModSettings** - Lets you configure the mod in-game  
    Visit: https://github.com/DigitalzombieTLD/ModSettings/
 
-3. **Download MissionImpossibleTLD Mod**  
+3. **Download ModData** - Stores the quests inside your save games  
+   Visit: https://github.com/dommrogers/ModData/releases
+
+4. **Download MissionImpossibleTLD Mod**  
    Get it from the Releases section of this mod
 
-4. **Extract into your Mods folder:**
+5. **Extract into your Mods folder:**
    ```
    C:\Program Files (x86)\Steam\steamapps\common\TheLongDark\Mods\
    ```
@@ -77,7 +80,7 @@ When each period ends (tomorrow, next week, next month), you automatically recei
    - MissionImpossible.dll
    - GearLookup.json
 
-5. **Launch game** - Mod loads automatically  
+6. **Launch game** - Mod loads automatically  
 
 
 ## Customization (In-Game Menu)
@@ -96,6 +99,7 @@ Once installed, open **Options → Mod Settings → Mission Impossible** to:
 - **The Long Dark** v2.55 or higher
 - **MelonLoader** v0.7.x
 - **ModSettings** v2.2.5
+- **ModData** v1.5.5
 
 
 ## FAQ
@@ -113,7 +117,7 @@ A: The mod scales based on quest difficulty, not your progress. Higher difficult
 A: Yes! Disable daily, weekly, or monthly quests individually in Mod settings.
 
 **Q: Will this mod affect my save?**  
-A: No. All quest data is stored separately. You can remove the mod anytime without losing progress.
+A: Your save game itself is not changed. The quests are stored with ModData inside each save in `Mods\ModData\<slot>.moddata`, so every save has its own quests. After a death or when you load an older save, you get the quests of that save. Deleting a save deletes its quests too.
 
 **Q: What if I want to reset all quests?**  
 A: Change any Settings in Mod Setting - new quests generate immediately.

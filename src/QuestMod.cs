@@ -10,6 +10,7 @@ using UnityEngine;
 
 [assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.4.0", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
+[assembly: MelonAdditionalDependencies("ModData")]
 
 namespace MissionImpossible
 {
@@ -50,10 +51,6 @@ namespace MissionImpossible
     public class QuestState
     {
         public List<Quest> ActiveQuests { get; set; } = new List<Quest>();
-        // Set once a "_DLC01" scene is observed loading - Unity can't load a scene that doesn't
-        // exist, so this is a reliable, zero-guesswork signal that DLC content is installed.
-        // DLC content is force-enabled from that point on; there is no player-facing toggle.
-        public bool DlcAutoDetected { get; set; } = false;
     }
 
     public partial class QuestMod : MelonMod
@@ -82,11 +79,13 @@ namespace MissionImpossible
         private DateTime _lastCheckTime;
         public bool _modSettingsAvailable = false;
 
-        // Flag to defer saves from callbacks
-        private bool _needsSave = false;
-        // Prevents concurrent save operations (hang prevention)
-        private bool _saveInProgress = false;
-        // Thread safety for console/save race conditions
+        // Quest data lives in the save game (ModData); loaded when a save is entered, dropped in the main menu
+        private readonly QuestStore _store = new QuestStore();
+        private string _loadedSaveName;
+        // Set once a "_DLC01" scene is seen loading - Unity can't load a scene that doesn't exist, so this is a
+        // reliable signal that DLC content is installed. Detected again every game start (the main menu is a DLC scene).
+        private bool _dlcDetected = false;
+        // Thread safety for console access to quest data
         private object _dataLock = new object();
         
         // Quest item counts tracked by item name, not GearItem ref (avoids stale-object crashes).
@@ -110,9 +109,6 @@ namespace MissionImpossible
 
         private string GearLookupPath =>
             Path.Combine(Directory.GetCurrentDirectory(), "Mods", "GearLookup.json");
-
-        private string QuestDataPath =>
-            Path.Combine(MelonLoader.Utils.MelonEnvironment.ModsDirectory, "QuestModData.json");
 
         // Initialize the mod - load settings, quests, and set up inventory monitoring
         public override void OnInitializeMelon()
@@ -143,21 +139,12 @@ namespace MissionImpossible
 
             // Load data
             LoadLookup();
-            LoadData();
 
             // Initialize GUI system to display quests in Journal/Collections
             new QuestModGUI();
 
-            if (_questState == null)
-            {
-                _questState = new QuestState();
-            }
-
-            // Defer quest gen to OnUpdate - TOD is null this early, would zero out EndDay
-            _needsInitialQuestGeneration = (_questState.ActiveQuests.Count == 0);
-
-            SaveData();
-            MelonLogger.Msg($"[QuestMod] Initialized - {_questState.ActiveQuests.Count} quests active - Difficulty: {_settings.GetDifficultyDescription()}");
+            // Quest data is loaded per save game once a save is entered (see EnsureSaveLoaded)
+            MelonLogger.Msg($"[QuestMod] Initialized - Difficulty: {_settings.GetDifficultyDescription()}");
         }
 
         // Check if ModSettings.dll is installed (required dependency)
@@ -180,28 +167,8 @@ namespace MissionImpossible
             return false;
         }
 
-        // Save quest data before game shutdown
         public override void OnApplicationQuit()
         {
-            try
-            {
-                MelonLogger.Msg("[QuestMod] Shutting down - saving data...");
-
-                if (_questState != null && _lookup != null)
-                {
-                    SaveDataSync();
-                    MelonLogger.Msg("[QuestMod] Quest data saved on exit.");
-                }
-                else
-                {
-                    MelonLogger.Warning("[QuestMod] Quest data or lookup is null, skipping save on exit.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestMod] Error during shutdown: {ex.Message}");
-            }
-
             Instance = null;
             MelonLogger.Msg("[QuestMod] Shutdown complete.");
         }
@@ -215,58 +182,80 @@ namespace MissionImpossible
             _lastCheckTime = DateTime.Now;
 
             CheckForDlcAutoEnable(sceneName);
+
+            // The quest data belongs to the save game: drop it in the main menu, it is loaded again with the next save
+            if (sceneName.Contains("MainMenu", StringComparison.OrdinalIgnoreCase))
+                UnloadSaveData();
+        }
+
+        private void UnloadSaveData()
+        {
+            _questState = null;
+            _loadedSaveName = null;
+            _store.Reset();
+            lock (_trackingLock)
+            {
+                _trackedItemUnitsByName.Clear();
+            }
+            _pendingAchievementRewards.Clear();
+        }
+
+        // Loads the quest data of the active save the first time a gameplay scene is entered
+        private void EnsureSaveLoaded()
+        {
+            if (_questState != null || !IsInGameplayScene)
+                return;
+
+            string saveName = SaveGameSystem.GetCurrentSaveName();
+            if (string.IsNullOrEmpty(saveName))
+                return;
+
+            _loadedSaveName = saveName;
+            _questState = _store.Load();
+
+            // A settings change made in the main menu also regenerates the quests of the save loaded next
+            _needsInitialQuestGeneration = _needsInitialQuestGeneration || _questState.ActiveQuests.Count == 0;
+
+            MelonLogger.Msg($"[QuestMod] Loaded quest data of save '{saveName}' - {_questState.ActiveQuests.Count} quests active");
+        }
+
+        // Called right before the game writes its save, so ModData stores the latest quest state with it
+        internal void OnBeforeGameSave()
+        {
+            _store.Commit(_questState);
         }
 
         // A "_DLC01" scene can only load if the DLC is installed - Unity can't load a scene
-        // that doesn't exist on disk. This fires once per install (persisted via _questState).
-        // DLC content is force-enabled from this point on - there is no player-facing toggle.
+        // that doesn't exist on disk. DLC content is force-enabled from this point on - there
+        // is no player-facing toggle.
         private void CheckForDlcAutoEnable(string sceneName)
         {
-            if (string.IsNullOrEmpty(sceneName) || _questState == null)
-                return;
-
-            if (_questState.DlcAutoDetected)
+            if (_dlcDetected || string.IsNullOrEmpty(sceneName))
                 return;
 
             if (sceneName.IndexOf("_DLC01", StringComparison.OrdinalIgnoreCase) < 0)
                 return;
 
-            _questState.DlcAutoDetected = true;
-            _needsSave = true;
+            _dlcDetected = true;
 
             MelonLogger.Msg($"[QuestMod] DLC content detected (scene: {sceneName}) - DLC items now included in quest generation.");
 
-            // Only regenerate if quests already exist this session - if initial generation
-            // hasn't run yet, it will naturally include DLC items now that this is set.
-            if (!_needsInitialQuestGeneration)
+            // Only regenerate if quests of a loaded save exist - otherwise generation will include DLC items anyway.
+            if (_questState != null && !_needsInitialQuestGeneration)
             {
                 RegenerateQuestsForSettingsChange(showCreationLogs: true);
             }
         }
 
-        // Handle scene unloading - save quest data before transition
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
             MelonLogger.Msg($"[QuestMod] Scene unloaded: {sceneName}");
-
-            try
-            {
-                if (_questState != null)
-                {
-                    // Sync save - scene unload is already a loading break, avoids teardown race
-                    SaveDataSync();
-                    MelonLogger.Msg("[QuestMod] Data saved before scene unload.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestMod] Error saving data on scene unload: {ex.Message}");
-            }
         }
 
-        // Main loop: quest resets, stack detection, deferred saves (all non-blocking)
+        // Main loop: quest resets, stack detection (all non-blocking)
         public override void OnUpdate()
         {
+            EnsureSaveLoaded();
             ProcessPendingAchievementRewards();
 
             // End suppress window, then seed tracking baseline once inventory has settled
@@ -279,14 +268,13 @@ namespace MissionImpossible
             // Deferred quest generation - fresh save, or a settings change that came in before
             // we were actually in a gameplay scene. TOD != null alone is NOT enough - confirmed
             // via testing that TimeOfDay can be non-null at the main menu with placeholder data.
-            if (_needsInitialQuestGeneration && _modSettingsAvailable && TOD != null && IsInGameplayScene && !_suppressLogging)
+            if (_needsInitialQuestGeneration && _modSettingsAvailable && _questState != null && TOD != null && IsInGameplayScene && !_suppressLogging)
             {
                 // Set false before the risky call so a failure here can't cause a retry loop
                 _needsInitialQuestGeneration = false;
                 try
                 {
                     RegenerateQuestsForSettingsChange();
-                    SaveData();
                     MelonLogger.Msg($"[QuestMod] Generated initial quests now that TimeOfDay is available - {_questState.ActiveQuests.Count} quests active");
                 }
                 catch (Exception ex)
@@ -338,14 +326,7 @@ namespace MissionImpossible
                 _settings.ValidateConfiguration();
                 _lastValidationCheckTime = DateTime.Now;
             }
-            
-            // Deferred save - prevents blocking the game thread with file I/O
-            if (_needsSave && !_saveInProgress)
-            {
-                SaveData();
-                _needsSave = false;
-            }
-        }
+                    }
 
 
         // Live-queries total units for a name - never holds a GearItem ref (can go stale/crash).
@@ -527,7 +508,7 @@ namespace MissionImpossible
                                 anyQuestReplaced = true;
                             }
                             
-                            SaveData();
+                            _store.MarkDirty();
                         }
                         
                         // Quest is complete - don't process further resets for this quest
@@ -579,7 +560,7 @@ namespace MissionImpossible
                     SeedInventoryTracking();
                 }
 
-                SaveData();
+                _store.MarkDirty();
             }
             catch
             {
@@ -599,7 +580,7 @@ namespace MissionImpossible
 
             GenerateQuestsAndNotify(questType, count, showCreationLog);
 
-            SaveData();
+            _store.MarkDirty();
         }
 
         // Generate one random quest of a type, applying difficulty multipliers
@@ -612,7 +593,7 @@ namespace MissionImpossible
             }
 
             List<string> allowedCategories = _settings.GetAllowedCategories();
-            if (_questState != null && _questState.DlcAutoDetected)
+            if (_dlcDetected)
             {
                 allowedCategories.Add("DLC");
             }
@@ -718,6 +699,9 @@ namespace MissionImpossible
         // Debug: complete every active quest of a type at once, then show one summary and one "new quests" message
         private void CompleteAllQuestsDebug(string questType)
         {
+            if (_questState == null)
+                return;
+
             var quests = _questState.ActiveQuests.Where(q => q.Type == questType).ToList();
             if (quests.Count == 0)
                 return;
@@ -799,7 +783,7 @@ namespace MissionImpossible
                 }
                 
                 // Save progress to file
-                SaveData();
+                _store.MarkDirty();
             }
         }
 
@@ -915,7 +899,7 @@ namespace MissionImpossible
             // of generating with placeholder/main-menu day-1 data - confirmed via testing that
             // TOD can be non-null at the main menu but still report day=1,hour=0 instead of
             // the real save's data, only becoming accurate once actually loaded into a save.
-            if (TOD == null || !IsInGameplayScene)
+            if (TOD == null || !IsInGameplayScene || _questState == null)
             {
                 _needsInitialQuestGeneration = true;
                 MelonLogger.Msg("[QuestMod] Not in a gameplay scene yet - deferring quest regeneration until we are");
@@ -932,7 +916,7 @@ namespace MissionImpossible
             if (_lookup == null)
             {
                 MelonLogger.Error("[QuestMod] CRITICAL: GearLookup is null! Quests cannot be generated. Fix GearLookup.json JSON errors.");
-                SaveData();
+                _store.MarkDirty();
                 return;
             }
 
@@ -979,7 +963,7 @@ namespace MissionImpossible
             // normal OnUpdate loop, never from a UI callback context.
             _needsReseedAfterRegen = true;
 
-            SaveData();
+            _store.MarkDirty();
         }
 
         // Load GearLookup.json containing all available quest items and their properties
@@ -1075,97 +1059,6 @@ namespace MissionImpossible
             }
         }
 
-        // Load quest data from disk - persists player progress between sessions
-        private void LoadData()
-        {
-            if (!File.Exists(QuestDataPath))
-            {
-                _questState = new QuestState();
-                SaveData();
-                return;
-            }
-
-            try
-            {
-                string json = File.ReadAllText(QuestDataPath);
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                _questState = JsonSerializer.Deserialize<QuestState>(json, options);
-                
-                // Recalculate Status for all quests based on CurrentAmount This handles old JSON files that don't have Status field
-                foreach (var quest in _questState.ActiveQuests)
-                {
-                    quest.Status = quest.CurrentAmount >= quest.RequiredAmount ? "Complete" : "Active";
-                }
-                
-                MelonLogger.Msg("[QuestMod] Quest data loaded from disk");
-                
-                // Display current missions on game load
-                if (_questState.ActiveQuests.Count > 0)
-                {
-                    //MelonLogger.Msg($"[QuestMod] Current Missions ({_questState.ActiveQuests.Count} active):");
-                    foreach (var quest in _questState.ActiveQuests)
-                    {
-                        //MelonLogger.Msg($"[QuestMod]   - {quest.Type} Quest: {quest.CollectKey} = {quest.CurrentAmount}/{quest.RequiredAmount} - {quest.Status}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestMod] Error loading quest data: {ex.Message}");
-                _questState = new QuestState();
-            }
-        }
-
-        // Async save for normal gameplay - do not use during shutdown (see SaveDataSync)
-        private void SaveData()
-        {
-            if (_saveInProgress)
-                return;
-
-            _saveInProgress = true;
-            System.Threading.ThreadPool.QueueUserWorkItem(SaveDataThreadCallback);
-        }
-
-        private void SaveDataThreadCallback(object state)
-        {
-            WriteQuestDataToDisk();
-        }
-
-        // Sync save for shutdown only - avoids a background thread racing process teardown
-        private void SaveDataSync()
-        {
-            if (_saveInProgress)
-                return;
-
-            _saveInProgress = true;
-            WriteQuestDataToDisk();
-        }
-
-        private void WriteQuestDataToDisk()
-        {
-            try
-            {
-                lock (_dataLock)
-                {
-                    string dirPath = Path.GetDirectoryName(QuestDataPath);
-                    if (!Directory.Exists(dirPath))
-                        Directory.CreateDirectory(dirPath);
-
-                    var options = new JsonSerializerOptions { WriteIndented = true };
-                    string json = JsonSerializer.Serialize(_questState, options);
-                    File.WriteAllText(QuestDataPath, json);
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error($"[QuestMod] Error saving quest data: {ex.Message}");
-            }
-            finally
-            {
-                _saveInProgress = false;
-            }
-        }
-
         // Core quest-progress logic by item name, called once per unit gained, from the scanner
         private void ProcessQuestItemPickup(string itemName, bool verbose)
         {
@@ -1209,7 +1102,7 @@ namespace MissionImpossible
                             }
                         }
 
-                        _needsSave = true;
+                        _store.MarkDirty();
                     }
 
                     if (!foundMatch && verbose)
