@@ -119,8 +119,9 @@ namespace MissionImpossible
         {
             try
             {
-                if (!__state && AchievementPlatformManager.IsUnlocked(achievement))
-                    QuestMod.Instance?.OnAchievementUnlocked(achievement);
+                var mod = QuestMod.Instance;
+                if (!__state && mod != null && mod.IsReady && AchievementPlatformManager.IsUnlocked(achievement))
+                    mod.OnAchievementUnlocked(achievement);
             }
             catch (Exception ex)
             {

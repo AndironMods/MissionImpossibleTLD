@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using MelonLoader;
 using Il2Cpp;
 using Il2CppTLD.Gear;
@@ -10,7 +11,7 @@ using UnityEngine;
 
 [assembly: MelonInfo(typeof(MissionImpossible.QuestMod), "Mission Impossible", "1.5.0", "Andiron")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
-[assembly: MelonAdditionalDependencies("ModData")]
+[assembly: MelonAdditionalDependencies("ModSettings", "ModData")]
 
 namespace MissionImpossible
 {
@@ -78,16 +79,22 @@ namespace MissionImpossible
             !_currentSceneName.Equals("Empty", StringComparison.OrdinalIgnoreCase);
         private DateTime _lastCheckTime;
         public bool _modSettingsAvailable = false;
+        // True once ModSettings and ModData were found and the mod is fully set up. Everything that touches types
+        // from those mods sits behind this flag (and in NoInlining methods): without them .NET fails to compile
+        // such a method at all, and a failing OnUpdate would throw an error every single frame.
+        private bool _modReady = false;
+        public bool IsReady => _modReady;
 
         // Quest data lives in the save game (ModData); loaded when a save is entered, dropped in the main menu
-        private readonly QuestStore _store = new QuestStore();
+        // Created in InitializeMod, after the required mods were found (the type needs ModData.dll)
+        private QuestStore _store;
         private string _loadedSaveName;
         // Set when settings change while no save is loaded (main menu): the save loaded next gets fresh quests
         private bool _regenerateOnNextLoad = false;
         private float _nextSaveLoadCheck;
         private float _saveLoadWaitSince = -1f;
         private bool _saveLoadWaitLogged;
-        public int QuestDataRevision => _store.Revision;
+        public int QuestDataRevision => _store?.Revision ?? 0;
         // Set once a "_DLC01" scene is seen loading - Unity can't load a scene that doesn't exist, so this is a
         // reliable signal that DLC content is installed. Detected again every game start (the main menu is a DLC scene).
         private bool _dlcDetected = false;
@@ -116,72 +123,100 @@ namespace MissionImpossible
         private string GearLookupPath =>
             Path.Combine(Directory.GetCurrentDirectory(), "Mods", "GearLookup.json");
 
-        // Initialize the mod - load settings, quests, and set up inventory monitoring
+        // Checks that the required mods are installed before anything of them is touched
         public override void OnInitializeMelon()
         {
             Instance = this;
-            MelonLogger.Msg("[QuestMod] *** Initializing Mission Impossible ***");
 
-            // Check for ModSettings prerequisite
-            if (!CheckModSettingsPrerequisite())
+            string missing = FindMissingDependencies();
+            if (missing != null)
             {
-                MelonLogger.Error("[QuestMod] FATAL: ModSettings.dll is required but not found!");
+                MelonLogger.Error($"[QuestMod] Mission Impossible is disabled: {missing} required but not found in the Mods folder. " +
+                                  "ModSettings: https://github.com/DigitalzombieTLD/ModSettings/  ModData: https://github.com/dommrogers/ModData/releases");
                 return;
             }
 
-            _modSettingsAvailable = true;
+            InitializeMod();
+        }
 
-            // Initialize settings
+        // Names of the missing required mods, or null if all are there
+        private static string FindMissingDependencies()
+        {
+            var missing = new List<string>();
+            foreach (string name in new[] { "ModSettings", "ModData" })
+            {
+                if (!IsAssemblyAvailable(name))
+                    missing.Add(name + ".dll");
+            }
+
+            if (missing.Count == 0)
+                return null;
+
+            return string.Join(" and ", missing) + (missing.Count == 1 ? " is" : " are");
+        }
+
+        private static bool IsAssemblyAvailable(string name)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (string.Equals(assembly.GetName().Name, name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
             try
             {
+                System.Reflection.Assembly.Load(new System.Reflection.AssemblyName(name));
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        // Load settings and lookup data, set up the GUI. Only called when ModSettings and ModData are present.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void InitializeMod()
+        {
+            try
+            {
+                _store = new QuestStore();
                 _settings = new QuestModSettings();
                 _settings.InitializeSettings();
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Error registering settings: {ex.Message}");
+                MelonLogger.Error($"[QuestMod] Mission Impossible is disabled: error registering settings: {ex.Message}");
                 return;
             }
 
-            // Load data
+            _modSettingsAvailable = true;
+
             LoadLookup();
 
             // Initialize GUI system to display quests in Journal/Collections
             new QuestModGUI();
 
+            _modReady = true;
+
             // Quest data is loaded per save game once a save is entered (see EnsureSaveLoaded)
             MelonLogger.Msg($"[QuestMod] Initialized - Difficulty: {_settings.GetDifficultyDescription()}");
-        }
-
-        // Check if ModSettings.dll is installed (required dependency)
-        private bool CheckModSettingsPrerequisite()
-        {
-            try
-            {
-                var modSettingsType = System.Type.GetType("ModSettings.ModSettingsBase, ModSettings");
-                if (modSettingsType != null)
-                {
-                    MelonLogger.Msg("[QuestMod] ModSettings.dll prerequisite check: PASSED");
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Warning($"[QuestMod] ModSettings prerequisite check error: {ex.Message}");
-            }
-
-            return false;
         }
 
         public override void OnApplicationQuit()
         {
             Instance = null;
-            MelonLogger.Msg("[QuestMod] Shutdown complete.");
+
+            if (_modReady)
+                MelonLogger.Msg("[QuestMod] Shutdown complete.");
         }
 
         // Handle scene loading - suppress initial inventory logging spam
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
+            if (!_modReady)
+                return;
+
             MelonLogger.Msg($"[QuestMod] Scene loaded: {sceneName}");
             _currentSceneName = sceneName;
             _suppressLogging = true;
@@ -250,6 +285,9 @@ namespace MissionImpossible
         // Called right before the game writes its save, so ModData stores the latest quest state with it
         internal void OnBeforeGameSave()
         {
+            if (!_modReady)
+                return;
+
             _store.Commit(_questState);
         }
 
@@ -277,11 +315,21 @@ namespace MissionImpossible
 
         public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
         {
+            if (!_modReady)
+                return;
+
             MelonLogger.Msg($"[QuestMod] Scene unloaded: {sceneName}");
         }
 
         // Main loop: quest resets, stack detection (all non-blocking)
         public override void OnUpdate()
+        {
+            if (_modReady)
+                UpdateMod();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void UpdateMod()
         {
             EnsureSaveLoaded();
             ProcessRewardQueue();
