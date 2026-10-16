@@ -131,28 +131,36 @@ namespace MissionImpossible
             string missing = FindMissingDependencies();
             if (missing != null)
             {
-                MelonLogger.Error($"[QuestMod] Mission Impossible is disabled: {missing} required but not found in the Mods folder. " +
-                                  "ModSettings: https://github.com/DigitalzombieTLD/ModSettings/  ModData: https://github.com/dommrogers/ModData/releases");
+                MelonLogger.Error($"[QuestMod] Mission Impossible is disabled: {missing}");
                 return;
             }
 
             InitializeMod();
         }
 
-        // Names of the missing required mods, or null if all are there
+        // Message about the missing required mods (with download links), or null if all are there
         private static string FindMissingDependencies()
         {
-            var missing = new List<string>();
-            foreach (string name in new[] { "ModSettings", "ModData" })
+            var names = new List<string>();
+            var links = new List<string>();
+
+            if (!IsAssemblyAvailable("ModSettings"))
             {
-                if (!IsAssemblyAvailable(name))
-                    missing.Add(name + ".dll");
+                names.Add("ModSettings.dll");
+                links.Add("ModSettings: https://github.com/DigitalzombieTLD/ModSettings/");
             }
 
-            if (missing.Count == 0)
+            if (!IsAssemblyAvailable("ModData"))
+            {
+                names.Add("ModData.dll");
+                links.Add("ModData: https://github.com/dommrogers/ModData/releases");
+            }
+
+            if (names.Count == 0)
                 return null;
 
-            return string.Join(" and ", missing) + (missing.Count == 1 ? " is" : " are");
+            return $"{string.Join(" and ", names)} {(names.Count == 1 ? "is" : "are")} required but not found in the Mods folder. " +
+                   $"Download: {string.Join("  ", links)}";
         }
 
         private static bool IsAssemblyAvailable(string name)
