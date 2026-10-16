@@ -120,7 +120,7 @@ A: Yes! Disable daily, weekly, or monthly quests individually in Mod settings.
 A: Your save game itself is not changed. The quests are stored with ModData inside each save in `Mods\ModData\<slot>.moddata`, so every save has its own quests. After a death or when you load an older save, you get the quests of that save. Deleting a save deletes its quests too.
 
 **Q: What if I want to reset all quests?**  
-A: Change any Settings in Mod Setting - new quests generate immediately.
+A: Change the difficulty or one of the "Allow ..." category settings - new quests for all types generate immediately. Changing only the Daily, Weekly or Monthly settings (enable/disable, number of quests) regenerates just that quest type.
 
 **Q: Can I change the amount of Items to collect or receive?**  
 A: Yes, you can change any settings to your personal preference in GearLookup.json.

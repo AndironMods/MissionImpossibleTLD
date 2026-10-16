@@ -182,7 +182,10 @@ namespace MissionImpossible
             return allowedCategories;
         }
 
-        private bool _questSettingsChanged = false;
+        // Which quests the settings changed since the last confirm: one category, or all of them
+        // (difficulty and the item category filters affect every quest)
+        private bool _allQuestTypesChanged = false;
+        private readonly HashSet<string> _changedQuestTypes = new HashSet<string>();
 
         // ==================== SETTINGS CALLBACKS ====================
         protected override void OnConfirm()
@@ -190,16 +193,32 @@ namespace MissionImpossible
             // The new value counts right away, not only with the next frame
             QuestMod.LoggingEnabled = EnablePickupLogging;
 
+            // If every quest type was switched off, Daily is switched on again - its quests have to be generated too
+            bool dailyWasEnabled = EnableDailyQuests;
+            ValidateConfiguration();
+            if (EnableDailyQuests && !dailyWasEnabled)
+                _changedQuestTypes.Add("Daily");
+
             ModLog.Info($"[QuestModSettings] Settings confirmed - Daily: {DailyQuestCount} ({(EnableDailyQuests ? "on" : "off")}), " +
                         $"Weekly: {WeeklyQuestCount} ({(EnableWeeklyQuests ? "on" : "off")}), " +
                         $"Monthly: {MonthlyQuestCount} ({(EnableMonthlyQuests ? "on" : "off")}), Difficulty: {GetDifficultyDescription()}");
 
-            // Only regenerate if quest-related settings actually changed
-            if (_questSettingsChanged && QuestMod.Instance != null)
+            // Only regenerate what the changed settings affect
+            if (QuestMod.Instance != null)
             {
-                QuestMod.Instance.RegenerateQuestsForSettingsChange(showCreationLogs: true);
-                _questSettingsChanged = false;  // Reset flag
+                if (_allQuestTypesChanged)
+                {
+                    QuestMod.Instance.RegenerateQuestsForSettingsChange(showCreationLogs: true);
+                }
+                else
+                {
+                    foreach (string questType in _changedQuestTypes)
+                        QuestMod.Instance.RegenerateQuestTypeForSettingsChange(questType, showCreationLogs: true);
+                }
             }
+
+            _allQuestTypesChanged = false;
+            _changedQuestTypes.Clear();
 
             // base.OnConfirm() calls Save() - required or settings never reach disk
             base.OnConfirm();
@@ -207,30 +226,34 @@ namespace MissionImpossible
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
         {
-            if (field != null)
+            if (field == null)
+                return;
+
+            switch (field.Name)
             {
-                
-                // Track if any quest-related setting changed
-                string[] questSettingNames = new[]
-                {
-                    nameof(DifficultyLevel),
-                    nameof(DailyQuestCount),
-                    nameof(EnableDailyQuests),
-                    nameof(WeeklyQuestCount),
-                    nameof(EnableWeeklyQuests),
-                    nameof(MonthlyQuestCount),
-                    nameof(EnableMonthlyQuests),
-                    nameof(AllowClothing),
-                    nameof(AllowFood),
-                    nameof(AllowTools),
-                    nameof(AllowFirstAid),
-                    nameof(AllowResources)
-                };
-                
-                if (System.Array.Exists(questSettingNames, element => element == field.Name))
-                {
-                    _questSettingsChanged = true;
-                }
+                case nameof(DailyQuestCount):
+                case nameof(EnableDailyQuests):
+                    _changedQuestTypes.Add("Daily");
+                    break;
+
+                case nameof(WeeklyQuestCount):
+                case nameof(EnableWeeklyQuests):
+                    _changedQuestTypes.Add("Weekly");
+                    break;
+
+                case nameof(MonthlyQuestCount):
+                case nameof(EnableMonthlyQuests):
+                    _changedQuestTypes.Add("Monthly");
+                    break;
+
+                case nameof(DifficultyLevel):
+                case nameof(AllowClothing):
+                case nameof(AllowFood):
+                case nameof(AllowTools):
+                case nameof(AllowFirstAid):
+                case nameof(AllowResources):
+                    _allQuestTypesChanged = true;
+                    break;
             }
         }
     }

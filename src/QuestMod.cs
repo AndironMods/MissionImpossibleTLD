@@ -91,6 +91,8 @@ namespace MissionImpossible
         private string _loadedSaveName;
         // Set when settings change while no save is loaded (main menu): the save loaded next gets fresh quests
         private bool _regenerateOnNextLoad = false;
+        // Quest types (Daily/Weekly/Monthly) whose settings changed while they could not be regenerated yet
+        private readonly HashSet<string> _pendingTypeRegeneration = new HashSet<string>();
         private float _nextSaveLoadCheck;
         private float _saveLoadWaitSince = -1f;
         private bool _saveLoadWaitLogged;
@@ -361,17 +363,37 @@ namespace MissionImpossible
             // Deferred quest generation - fresh save, or a settings change that came in before
             // we were actually in a gameplay scene. TOD != null alone is NOT enough - confirmed
             // via testing that TimeOfDay can be non-null at the main menu with placeholder data.
-            if (_needsInitialQuestGeneration && _modSettingsAvailable && _questState != null && TOD != null && IsInGameplayScene && !_suppressLogging)
+            if (_modSettingsAvailable && _questState != null && TOD != null && IsInGameplayScene && !_suppressLogging)
             {
-                // Set false before the risky call so a failure here can't cause a retry loop
-                _needsInitialQuestGeneration = false;
-                try
+                if (_needsInitialQuestGeneration)
                 {
-                    RegenerateQuestsForSettingsChange();
+                    // Set false before the risky call so a failure here can't cause a retry loop
+                    _needsInitialQuestGeneration = false;
+                    try
+                    {
+                        RegenerateQuestsForSettingsChange();
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLog.Error($"[QuestMod] Error generating initial quests: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
+                else if (_pendingTypeRegeneration.Count > 0)
                 {
-                    ModLog.Error($"[QuestMod] Error generating initial quests: {ex.Message}");
+                    var types = _pendingTypeRegeneration.ToList();
+                    _pendingTypeRegeneration.Clear();
+
+                    foreach (string type in types)
+                    {
+                        try
+                        {
+                            RegenerateQuestTypeForSettingsChange(type);
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLog.Error($"[QuestMod] Error regenerating {type} quests: {ex.Message}");
+                        }
+                    }
                 }
             }
 
@@ -1023,6 +1045,45 @@ namespace MissionImpossible
             }
         }
 
+        // Clear and regenerate only the quests of one type (the Daily, Weekly or Monthly settings changed).
+        // A type that was switched off just loses its quests.
+        public void RegenerateQuestTypeForSettingsChange(string questType, bool showCreationLogs = false)
+        {
+            // Same reason as in RegenerateQuestsForSettingsChange: wait for a loaded save in a gameplay scene
+            if (_questState == null || TOD == null || !IsInGameplayScene)
+            {
+                _pendingTypeRegeneration.Add(questType);
+                ModLog.Info($"[QuestMod] {questType} quests are regenerated as soon as a save is loaded");
+                return;
+            }
+
+            _questState.ActiveQuests.RemoveAll(q => q.Type == questType);
+
+            if (_lookup == null)
+            {
+                ModLog.Error("[QuestMod] CRITICAL: GearLookup is null! Quests cannot be generated. Fix GearLookup.json JSON errors.");
+                _store.MarkDirty();
+                return;
+            }
+
+            bool enabled = questType switch
+            {
+                "Daily" => _settings.EnableDailyQuests,
+                "Weekly" => _settings.EnableWeeklyQuests,
+                "Monthly" => _settings.EnableMonthlyQuests,
+                _ => false
+            };
+
+            if (enabled)
+                GenerateQuestType(questType, showCreationLog: showCreationLogs);
+
+            if (ModLog.Enabled)
+                ModLog.Info($"[QuestMod] {questType} quests regenerated: {_questState.ActiveQuests.Count(q => q.Type == questType)}");
+
+            _needsReseedAfterRegen = true;
+            _store.MarkDirty();
+        }
+
         // Clear and regenerate all quests based on current settings
         public void RegenerateQuestsForSettingsChange(bool showCreationLogs = false)
         {
@@ -1045,6 +1106,7 @@ namespace MissionImpossible
                 return;
             }
 
+            _pendingTypeRegeneration.Clear();
             _questState.ActiveQuests.Clear();
 
             if (_lookup == null)

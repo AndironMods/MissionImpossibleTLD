@@ -4,6 +4,7 @@
 * Quest data is now stored inside the save game with ModData (ModData is required): every save has its own quests, loading an older save restores its quests
 * New messages: "New daily quests created!", "All daily quests completed!" (also weekly/monthly)
 * Fix: a completed quest no longer keeps counting items (no more "12/2")
+* Changing the Daily, Weekly or Monthly settings (enable/disable, number of quests) now only regenerates the quests of that type; difficulty and item category settings still regenerate all quests
 * Logging reworked: with "Enable Logging" the MelonLoader console shows short event lines (scene changes, pickups, quest progress, rewards, achievements); warnings and errors are always shown, without repeating the same message every frame
 * A missing ModSettings.dll or ModData.dll now gives one clear message instead of an error on every frame
 * Performance: rewards are handed out over several frames, item names are looked up without creating items, the journal only rebuilds its texts when something changed
