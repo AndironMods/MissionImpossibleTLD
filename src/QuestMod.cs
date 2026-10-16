@@ -95,6 +95,13 @@ namespace MissionImpossible
         private float _saveLoadWaitSince = -1f;
         private bool _saveLoadWaitLogged;
         public int QuestDataRevision => _store?.Revision ?? 0;
+
+        // Mirrors the "Enable Logging" setting; ModLog reads it, so no code needs the settings object just to log
+        public static bool LoggingEnabled { get; set; }
+
+        // Quests that gained progress / just completed during the current inventory scan (for the log only)
+        private readonly HashSet<Quest> _progressedQuests = new HashSet<Quest>();
+        private readonly HashSet<Quest> _justCompleted = new HashSet<Quest>();
         // Set once a "_DLC01" scene is seen loading - Unity can't load a scene that doesn't exist, so this is a
         // reliable signal that DLC content is installed. Detected again every game start (the main menu is a DLC scene).
         private bool _dlcDetected = false;
@@ -199,6 +206,7 @@ namespace MissionImpossible
             }
 
             _modSettingsAvailable = true;
+            LoggingEnabled = _settings.EnablePickupLogging;
 
             LoadLookup();
 
@@ -208,15 +216,14 @@ namespace MissionImpossible
             _modReady = true;
 
             // Quest data is loaded per save game once a save is entered (see EnsureSaveLoaded)
-            MelonLogger.Msg($"[QuestMod] Initialized - Difficulty: {_settings.GetDifficultyDescription()}");
+            ModLog.Info($"[QuestMod] Initialized - Difficulty: {_settings.GetDifficultyDescription()}, " +
+                        $"{_lookup?.items_to_collect.Count ?? 0} collect items, {_lookup?.items_as_reward.Count ?? 0} reward items, " +
+                        $"{_achievementRewards.Count} achievement rewards");
         }
 
         public override void OnApplicationQuit()
         {
             Instance = null;
-
-            if (_modReady)
-                MelonLogger.Msg("[QuestMod] Shutdown complete.");
         }
 
         // Handle scene loading - suppress initial inventory logging spam
@@ -225,7 +232,7 @@ namespace MissionImpossible
             if (!_modReady)
                 return;
 
-            MelonLogger.Msg($"[QuestMod] Scene loaded: {sceneName}");
+            ModLog.Info($"[QuestMod] Scene loaded: {sceneName}");
             _currentSceneName = sceneName;
             _suppressLogging = true;
             _lastCheckTime = DateTime.Now;
@@ -273,7 +280,7 @@ namespace MissionImpossible
                 if (!_saveLoadWaitLogged && Time.unscaledTime - _saveLoadWaitSince > 10f)
                 {
                     _saveLoadWaitLogged = true;
-                    MelonLogger.Warning("[QuestMod] The game reports no save game name - quests are loaded as soon as it does.");
+                    ModLog.Warning("[QuestMod] The game reports no save game name - quests are loaded as soon as it does.");
                 }
                 return;
             }
@@ -287,7 +294,7 @@ namespace MissionImpossible
             _needsInitialQuestGeneration = _regenerateOnNextLoad || _questState.ActiveQuests.Count == 0;
             _regenerateOnNextLoad = false;
 
-            MelonLogger.Msg($"[QuestMod] Loaded quest data of save '{saveName}' - {_questState.ActiveQuests.Count} quests active");
+            ModLog.Info($"[QuestMod] Loaded quest data of save '{saveName}' - {_questState.ActiveQuests.Count} quests active");
         }
 
         // Called right before the game writes its save, so ModData stores the latest quest state with it
@@ -312,7 +319,7 @@ namespace MissionImpossible
 
             _dlcDetected = true;
 
-            MelonLogger.Msg($"[QuestMod] DLC content detected (scene: {sceneName}) - DLC items now included in quest generation.");
+            ModLog.Info($"[QuestMod] DLC content detected (scene: {sceneName}) - DLC items now included in quest generation.");
 
             // Only regenerate if quests of a loaded save exist - otherwise generation will include DLC items anyway.
             if (_questState != null && !_needsInitialQuestGeneration)
@@ -326,7 +333,7 @@ namespace MissionImpossible
             if (!_modReady)
                 return;
 
-            MelonLogger.Msg($"[QuestMod] Scene unloaded: {sceneName}");
+            ModLog.Info($"[QuestMod] Scene unloaded: {sceneName}");
         }
 
         // Main loop: quest resets, stack detection (all non-blocking)
@@ -339,6 +346,8 @@ namespace MissionImpossible
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void UpdateMod()
         {
+            LoggingEnabled = _settings.EnablePickupLogging;
+
             EnsureSaveLoaded();
             ProcessRewardQueue();
 
@@ -359,11 +368,10 @@ namespace MissionImpossible
                 try
                 {
                     RegenerateQuestsForSettingsChange();
-                    MelonLogger.Msg($"[QuestMod] Generated initial quests now that TimeOfDay is available - {_questState.ActiveQuests.Count} quests active");
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Error($"[QuestMod] Error generating initial quests: {ex.Message}");
+                    ModLog.Error($"[QuestMod] Error generating initial quests: {ex.Message}");
                 }
             }
 
@@ -377,7 +385,7 @@ namespace MissionImpossible
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Error($"[QuestMod] Error reseeding inventory tracking: {ex.Message}");
+                    ModLog.Error($"[QuestMod] Error reseeding inventory tracking: {ex.Message}");
                 }
             }
 
@@ -450,7 +458,6 @@ namespace MissionImpossible
                 if (inventory == null)
                     return;
 
-                bool verbose = _settings != null && _settings.EnablePickupLogging;
                 var collectKeys = _questState.ActiveQuests.Select(q => q.CollectKey).Distinct().ToList();
 
                 lock (_trackingLock)
@@ -476,22 +483,22 @@ namespace MissionImpossible
 
                         if (currentTotal > lastKnown)
                         {
-                            if (verbose)
-                            {
-                                MelonLogger.Msg($"[QuestMod] Item count increased: '{GetDisplayName(key)}' {lastKnown} -> {currentTotal}");
-                            }
+                            if (ModLog.Enabled)
+                                ModLog.Info($"[QuestMod] Item count increased: '{GetDisplayName(key)}' {lastKnown} -> {currentTotal}");
 
                             int unitsAdded = currentTotal - lastKnown;
                             for (int i = 0; i < unitsAdded; i++)
                             {
-                                ProcessQuestItemPickup(key, verbose);
+                                ProcessQuestItemPickup(key);
                             }
+
+                            LogQuestProgress(key);
                         }
-                        else if (currentTotal < lastKnown && verbose)
+                        else if (currentTotal < lastKnown && ModLog.Enabled)
                         {
                             // Drop/consume/craft-away: not counted toward progress, but baseline
                             // still updates below or a later re-pickup wouldn't register.
-                            MelonLogger.Msg($"[QuestMod] Item count decreased: '{GetDisplayName(key)}' {lastKnown} -> {currentTotal} (not counted)");
+                            ModLog.Info($"[QuestMod] Item count decreased: '{GetDisplayName(key)}' {lastKnown} -> {currentTotal} (not counted)");
                         }
 
                         // Reward items are queued and sync their own baseline when they are handed out
@@ -502,7 +509,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Warning($"[QuestMod] Error checking for stacked items: {ex.Message}");
+                ModLog.Warning($"[QuestMod] Error checking for stacked items: {ex.Message}");
             }
         }
 
@@ -525,11 +532,10 @@ namespace MissionImpossible
                     }
                 }
 
-                // MelonLogger.Msg($"[QuestMod] Seeded inventory tracking across {collectKeys.Count} quest item type(s)");
             }
             catch (Exception ex)
             {
-                MelonLogger.Warning($"[QuestMod] Error seeding inventory tracking: {ex.Message}");
+                ModLog.Warning($"[QuestMod] Error seeding inventory tracking: {ex.Message}");
             }
         }
 
@@ -661,7 +667,7 @@ namespace MissionImpossible
         {
             if (_lookup?.items_to_collect == null)
             {
-                MelonLogger.Error($"[QuestMod] Cannot generate {questType} quest: items_to_collect is null!");
+                ModLog.Error($"[QuestMod] Cannot generate {questType} quest: items_to_collect is null!");
                 return false;
             }
 
@@ -683,7 +689,7 @@ namespace MissionImpossible
 
             if (validItems.Count == 0)
             {
-                MelonLogger.Error($"[QuestMod] No valid {questType} collection items found! Allowed categories: {string.Join(", ", allowedCategories)}");
+                ModLog.Error($"[QuestMod] No valid {questType} collection items found! Allowed categories: {string.Join(", ", allowedCategories)}");
                 return false;
             }
 
@@ -696,7 +702,7 @@ namespace MissionImpossible
 
             if (rewardItems.Count == 0)
             {
-                MelonLogger.Error($"[QuestMod] No valid {questType} reward items found!");
+                ModLog.Error($"[QuestMod] No valid {questType} reward items found!");
                 return false;
             }
 
@@ -779,9 +785,9 @@ namespace MissionImpossible
             if (quests.Count == 0)
                 return;
 
-            MelonLogger.Msg($"[QuestMod] All {questType} Quests completed!");
+            ModLog.Info($"[QuestMod] All {questType} Quests completed!");
             try { HUDMessage.AddMessage($"All {questType.ToLowerInvariant()} quests completed!", true); }
-            catch (Exception ex) { MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {ex.Message}"); }
+            catch (Exception ex) { ModLog.Warning($"[QuestMod] Could not display completion notification: {ex.Message}"); }
 
             int questNumber = 1;
             foreach (var quest in quests)
@@ -830,7 +836,7 @@ namespace MissionImpossible
                     }
                     catch (Exception displayEx)
                     {
-                        MelonLogger.Msg($"[QuestMod] Note: Could not display completion notification (non-critical): {displayEx.Message}");
+                        ModLog.Warning($"[QuestMod] Could not display completion notification: {displayEx.Message}");
                     }
                 }
                 
@@ -896,7 +902,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Msg($"[QuestMod] Note: Could not display notification (non-critical): {ex.Message}");
+                ModLog.Warning($"[QuestMod] Could not display notification: {ex.Message}");
             }
         }
 
@@ -941,7 +947,7 @@ namespace MissionImpossible
                             budget -= batch;
 
                             if (added < batch)
-                                MelonLogger.Error($"[QuestMod] Failed to instantiate reward item: {reward.Key} ({GetDisplayName(reward.Key)})");
+                                ModLog.Error($"[QuestMod] Failed to instantiate reward item: {reward.Key} ({GetDisplayName(reward.Key)})");
 
                             // Sync the tracking baseline for the reward item to its new true count.
                             // Without this, the next scan tick would see the reward units as a fresh
@@ -957,7 +963,7 @@ namespace MissionImpossible
                                 }
                                 catch (Exception trackEx)
                                 {
-                                    MelonLogger.Error($"[QuestMod] Error syncing reward tracking baseline: {trackEx.Message}");
+                                    ModLog.Error($"[QuestMod] Error syncing reward tracking baseline: {trackEx.Message}");
                                 }
                             }
 
@@ -968,7 +974,8 @@ namespace MissionImpossible
                                 if (reward.Given > 0)
                                 {
                                     ShowHudMessage($"{reward.NotificationPrefix}: {reward.Given}x {GetDisplayName(reward.Key)}");
-                                    MelonLogger.Msg($"[QuestMod] Reward notification displayed: {reward.Given}x {GetDisplayName(reward.Key)}");
+                                    if (ModLog.Enabled)
+                                        ModLog.Info($"[QuestMod] Reward notification displayed: {reward.Given}x {GetDisplayName(reward.Key)}");
                                 }
                             }
                         }
@@ -987,8 +994,8 @@ namespace MissionImpossible
                 if (_rewardQueue.Count > 0)
                     _rewardQueue.Dequeue();
 
-                MelonLogger.Error($"[QuestMod] Error giving reward: {ex.Message}");
-                MelonLogger.Error($"[QuestMod] Stack trace: {ex.StackTrace}");
+                ModLog.Error($"[QuestMod] Error giving reward: {ex.Message}");
+                ModLog.Error($"[QuestMod] Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -1027,67 +1034,41 @@ namespace MissionImpossible
             if (_questState == null)
             {
                 _regenerateOnNextLoad = true;
-                MelonLogger.Msg("[QuestMod] No save loaded - quests are regenerated as soon as a save is loaded");
+                ModLog.Info("[QuestMod] No save loaded - quests are regenerated as soon as a save is loaded");
                 return;
             }
 
             if (TOD == null || !IsInGameplayScene)
             {
                 _needsInitialQuestGeneration = true;
-                MelonLogger.Msg("[QuestMod] Not in a gameplay scene yet - deferring quest regeneration until we are");
+                ModLog.Info("[QuestMod] Not in a gameplay scene yet - deferring quest regeneration until we are");
                 return;
             }
 
-            MelonLogger.Msg("[QuestMod] Clearing active quests...");
             _questState.ActiveQuests.Clear();
-
-            MelonLogger.Msg($"[QuestMod] Lookup status: {(_lookup != null ? "LOADED" : "NULL - Cannot generate quests!")}");
-            MelonLogger.Msg($"[QuestMod] Settings status: {(_settings != null ? "LOADED" : "NULL")}");
-            MelonLogger.Msg($"[QuestMod] QuestState status: {(_questState != null ? "LOADED" : "NULL")}");
 
             if (_lookup == null)
             {
-                MelonLogger.Error("[QuestMod] CRITICAL: GearLookup is null! Quests cannot be generated. Fix GearLookup.json JSON errors.");
+                ModLog.Error("[QuestMod] CRITICAL: GearLookup is null! Quests cannot be generated. Fix GearLookup.json JSON errors.");
                 _store.MarkDirty();
                 return;
             }
 
-            int totalQuests = 0;
-
             if (_settings.EnableDailyQuests)
-            {
-                MelonLogger.Msg($"[QuestMod] Generating {_settings.DailyQuestCount} Daily quests...");
                 GenerateQuestType("Daily", showCreationLog: showCreationLogs);
-                totalQuests += _settings.DailyQuestCount;
-            }
-            else
-            {
-                MelonLogger.Msg("[QuestMod] Daily quests DISABLED");
-            }
 
             if (_settings.EnableWeeklyQuests)
-            {
-                MelonLogger.Msg($"[QuestMod] Generating {_settings.WeeklyQuestCount} Weekly quests...");
                 GenerateQuestType("Weekly", showCreationLog: showCreationLogs);
-                totalQuests += _settings.WeeklyQuestCount;
-            }
-            else
-            {
-                MelonLogger.Msg("[QuestMod] Weekly quests DISABLED");
-            }
 
             if (_settings.EnableMonthlyQuests)
-            {
-                MelonLogger.Msg($"[QuestMod] Generating {_settings.MonthlyQuestCount} Monthly quests...");
                 GenerateQuestType("Monthly", showCreationLog: showCreationLogs);
-                totalQuests += _settings.MonthlyQuestCount;
-            }
-            else
-            {
-                MelonLogger.Msg("[QuestMod] Monthly quests DISABLED");
-            }
 
-            MelonLogger.Msg($"[QuestMod] Total quests generated: {_questState.ActiveQuests.Count}/{totalQuests}");
+            if (ModLog.Enabled)
+            {
+                ModLog.Info($"[QuestMod] Quests generated: Daily {_questState.ActiveQuests.Count(q => q.Type == "Daily")}, " +
+                            $"Weekly {_questState.ActiveQuests.Count(q => q.Type == "Weekly")}, " +
+                            $"Monthly {_questState.ActiveQuests.Count(q => q.Type == "Monthly")}");
+            }
 
             // Defer the re-seed to OnUpdate instead of calling it directly here - this method
             // can be invoked from OnConfirm (a settings-menu UI callback), and every other
@@ -1103,7 +1084,7 @@ namespace MissionImpossible
         {
             if (!File.Exists(GearLookupPath))
             {
-                MelonLogger.Error($"[QuestMod] GearLookup.json not found at {GearLookupPath}");
+                ModLog.Error($"[QuestMod] GearLookup.json not found at {GearLookupPath}");
                 return;
             }
 
@@ -1181,31 +1162,26 @@ namespace MissionImpossible
                     }
                 }
 
-                MelonLogger.Msg($"[QuestMod] Loaded {_lookup.items_to_collect.Count} collect items and {_lookup.items_as_reward.Count} reward items");
 
                 ParseAchievementRewards(root);
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Error loading GearLookup: {ex.Message}");
+                ModLog.Error($"[QuestMod] Error loading GearLookup: {ex.Message}");
             }
         }
 
         // Core quest-progress logic by item name, called once per unit gained, from the scanner
-        private void ProcessQuestItemPickup(string itemName, bool verbose)
+        private void ProcessQuestItemPickup(string itemName)
         {
             lock (_dataLock)
             {
                 try
                 {
-                    bool foundMatch = false;
-
                     foreach (var quest in _questState.ActiveQuests.ToList())
                     {
                         if (!quest.CollectKey.Equals(itemName, System.StringComparison.OrdinalIgnoreCase))
                             continue;
-
-                        foundMatch = true;
 
                         // Already complete: further units don't count, the counter stays at the required amount
                         if (quest.Status == "Complete")
@@ -1213,11 +1189,8 @@ namespace MissionImpossible
 
                         quest.CurrentAmount += 1;
 
-                        if (verbose)
-                        {
-                            MelonLogger.Msg($"[QuestMod] Quest Item added to inventory: '{GetDisplayName(itemName)}'");
-                            MelonLogger.Msg($"[QuestMod] Progress: {quest.Type} Quest: {GetDisplayName(quest.CollectKey)} - {quest.CurrentAmount}/{quest.RequiredAmount} (+1)");
-                        }
+                        if (ModLog.Enabled)
+                            _progressedQuests.Add(quest);
 
                         // Only complete once, on first threshold crossing
                         if (quest.CurrentAmount >= quest.RequiredAmount && quest.Status != "Complete")
@@ -1228,30 +1201,44 @@ namespace MissionImpossible
                             }
                             catch (Exception ex)
                             {
-                                MelonLogger.Error($"[QuestMod] Error in CheckAndCompleteQuest: {ex.Message}");
+                                ModLog.Error($"[QuestMod] Error in CheckAndCompleteQuest: {ex.Message}");
                             }
 
                             // Only claim success if the quest actually completed - CheckAndCompleteQuest
                             // can decline to complete (e.g. a guard/cooldown), so don't assume it worked
-                            if (verbose && quest.Status == "Complete")
-                            {
-                                MelonLogger.Msg($"[QuestMod] {quest.Type} Quest objective complete! Reward queued.");
-                            }
+                            if (quest.Status == "Complete" && ModLog.Enabled)
+                                _justCompleted.Add(quest);
                         }
 
                         _store.MarkDirty();
                     }
-
-                    if (!foundMatch && verbose)
-                    {
-                        MelonLogger.Msg($"[QuestMod] Item added to inventory: '{GetDisplayName(itemName)}'");
-                    }
                 }
                 catch (Exception ex)
                 {
-                    MelonLogger.Error($"[QuestMod] Error in ProcessQuestItemPickup: {ex.Message}");
+                    ModLog.Error($"[QuestMod] Error in ProcessQuestItemPickup: {ex.Message}");
                 }
             }
+        }
+
+        // One line per quest per inventory scan, however many units were picked up at once
+        private void LogQuestProgress(string key)
+        {
+            if (ModLog.Enabled)
+            {
+                foreach (var quest in _questState.ActiveQuests)
+                {
+                    if (!_progressedQuests.Contains(quest))
+                        continue;
+
+                    ModLog.Info($"[QuestMod] Progress: {quest.Type} Quest: {GetDisplayName(quest.CollectKey)} - {quest.CurrentAmount}/{quest.RequiredAmount}");
+
+                    if (_justCompleted.Contains(quest))
+                        ModLog.Info($"[QuestMod] {quest.Type} Quest objective complete! Reward queued.");
+                }
+            }
+
+            _progressedQuests.Clear();
+            _justCompleted.Clear();
         }
 
         // Quest progress summary for a type, used by QuestModGUI
@@ -1308,7 +1295,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Warning($"[QuestMod] Failed to resolve GearItemData for '{spawnName}': {ex.Message}");
+                ModLog.Warning($"[QuestMod] Failed to resolve GearItemData for '{spawnName}': {ex.Message}");
             }
 
             _spawnNameToGearItemData[spawnName] = data;
@@ -1338,7 +1325,7 @@ namespace MissionImpossible
             catch (Exception ex)
             {
                 if (_nameLookupWarned.Add(spawnName))
-                    MelonLogger.Warning($"[QuestMod] GetGearDisplayName failed for '{spawnName}': {ex.Message}");
+                    ModLog.Warning($"[QuestMod] GetGearDisplayName failed for '{spawnName}': {ex.Message}");
             }
 
             try
@@ -1353,7 +1340,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Warning($"[QuestMod] Error reading localized DisplayName for '{spawnName}': {ex.Message}");
+                ModLog.Warning($"[QuestMod] Error reading localized DisplayName for '{spawnName}': {ex.Message}");
             }
 
             if (_spawnNameToDisplayName.TryGetValue(spawnName, out string jsonName))

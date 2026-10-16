@@ -29,19 +29,6 @@ namespace MissionImpossible
             ApplyHarmonyPatches();
         }
 
-        private static readonly Dictionary<string, float> _lastErrorLogTime = new Dictionary<string, float>();
-
-        // Most of this class runs every frame while the journal is open; a persistent error must not flood the log
-        private static void LogErrorThrottled(string message)
-        {
-            float now = Time.unscaledTime;
-            if (_lastErrorLogTime.TryGetValue(message, out float last) && now - last < 10f)
-                return;
-
-            _lastErrorLogTime[message] = now;
-            MelonLogger.Error(message);
-        }
-
         private static void SetLabelText(UILabel label, string text)
         {
             if (label != null && label.text != text)
@@ -143,11 +130,14 @@ namespace MissionImpossible
                     patchedCount++;
                 }
 
-                MelonLogger.Msg($"[QuestModGUI] GUI system initialized - {patchedCount}/7 patches applied");
+                if (patchedCount < 7)
+                    ModLog.Warning($"[QuestModGUI] Only {patchedCount}/7 GUI patches could be applied - the quest entries in the journal may not work");
+                else
+                    ModLog.Info($"[QuestModGUI] GUI system initialized - {patchedCount}/7 patches applied");
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error applying Harmony patches: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error applying Harmony patches: {ex.Message}");
             }
         }
 
@@ -239,7 +229,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] CreateOffsetVectors error: {ex.Message}");
             }
         }
 
@@ -259,7 +249,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in Prefix_BuildCollectionsList: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in Prefix_BuildCollectionsList: {ex.Message}");
             }
         }
 
@@ -275,7 +265,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in Postfix_BuildCollectionsList: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in Postfix_BuildCollectionsList: {ex.Message}");
             }
         }
 
@@ -295,7 +285,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in Postfix_Panel_Log_Update: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in Postfix_Panel_Log_Update: {ex.Message}");
             }
         }
 
@@ -313,7 +303,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in Postfix_Panel_Log_LateUpdate: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in Postfix_Panel_Log_LateUpdate: {ex.Message}");
             }
         }
 
@@ -336,7 +326,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in Postfix_ScrollList_Update: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in Postfix_ScrollList_Update: {ex.Message}");
             }
         }
 
@@ -358,7 +348,7 @@ namespace MissionImpossible
                 }
                 catch (Exception ex)
                 {
-                    LogErrorThrottled($"[QuestModGUI] Error ensuring quest entry for {type}: {ex.Message}");
+                    ModLog.Error($"[QuestModGUI] Error ensuring quest entry for {type}: {ex.Message}");
                 }
             }
         }
@@ -423,7 +413,7 @@ namespace MissionImpossible
 
                 if (grandparent == null)
                 {
-                    LogErrorThrottled("[QuestModGUI] Could not find grandparent container");
+                    ModLog.Error("[QuestModGUI] Could not find grandparent container");
                     return null;
                 }
 
@@ -437,7 +427,7 @@ namespace MissionImpossible
                 GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, _cachedGrandparent);
                 if (clone == null)
                 {
-                    LogErrorThrottled($"[QuestModGUI] Instantiate failed for {type}");
+                    ModLog.Error($"[QuestModGUI] Instantiate failed for {type}");
                     return null;
                 }
 
@@ -455,7 +445,7 @@ namespace MissionImpossible
                 var cloneComp = clone.GetComponent<CollectionListItem>();
                 if (cloneComp == null)
                 {
-                    LogErrorThrottled($"[QuestModGUI] Clone missing CollectionListItem component");
+                    ModLog.Error($"[QuestModGUI] Clone missing CollectionListItem component");
                     UnityEngine.Object.Destroy(clone);
                     return null;
                 }
@@ -483,14 +473,14 @@ namespace MissionImpossible
                 }
                 catch (Exception ex)
                 {
-                    LogErrorThrottled($"[QuestModGUI] Could not wire click listener: {ex.Message}");
+                    ModLog.Error($"[QuestModGUI] Could not wire click listener: {ex.Message}");
                 }
 
                 return cloneComp;
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in FindOrCreateQuestEntry: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in FindOrCreateQuestEntry: {ex.Message}");
                 return null;
             }
         }
@@ -531,7 +521,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
             }
         }
 
@@ -572,7 +562,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in OnQuestEntryClicked: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in OnQuestEntryClicked: {ex.Message}");
             }
         }
 
@@ -645,7 +635,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                LogErrorThrottled($"[QuestModGUI] Error in ApplyQuestDetailOverrideIfNeeded: {ex.Message}");
+                ModLog.Error($"[QuestModGUI] Error in ApplyQuestDetailOverrideIfNeeded: {ex.Message}");
             }
         }
 

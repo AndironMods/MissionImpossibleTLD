@@ -26,7 +26,7 @@ namespace MissionImpossible
 
             if (!root.TryGetProperty("achievements", out JsonElement section))
             {
-                MelonLogger.Warning("[QuestMod] No \"achievements\" section in GearLookup.json - achievement rewards disabled.");
+                ModLog.Warning("[QuestMod] No \"achievements\" section in GearLookup.json - achievement rewards disabled.");
                 return;
             }
 
@@ -42,13 +42,12 @@ namespace MissionImpossible
                     if (IsQuestType(questType))
                         entry.enabledQuestTypes.Add(questType);
                     else
-                        MelonLogger.Warning($"[QuestMod] Achievement '{item.Name}' has unknown quest_type '{questType}' (use daily, weekly or monthly) - ignored.");
+                        ModLog.Warning($"[QuestMod] Achievement '{item.Name}' has unknown quest_type '{questType}' (use daily, weekly or monthly) - ignored.");
                 }
 
                 _achievementRewards[item.Name] = entry;
             }
 
-            MelonLogger.Msg($"[QuestMod] Loaded {_achievementRewards.Count} achievement reward entries");
         }
 
         private static bool IsQuestType(string value)
@@ -87,7 +86,7 @@ namespace MissionImpossible
 
                 if (pool.Count == 0)
                 {
-                    MelonLogger.Warning($"[QuestMod] No {questType} reward items available for achievement '{name}'.");
+                    ModLog.Warning($"[QuestMod] No {questType} reward items available for achievement '{name}'.");
                     return;
                 }
 
@@ -96,11 +95,12 @@ namespace MissionImpossible
 
                 // Only queued here; handed out from OnUpdate, never inside the game's unlock call
                 GrantRewardItems(reward.spawn_name, amount, "Achievement Reward");
-                MelonLogger.Msg($"[QuestMod] Achievement unlocked: {name} ({questType}) - reward queued: {amount}x {reward.spawn_name}");
+                if (ModLog.Enabled)
+                    ModLog.Info($"[QuestMod] Achievement unlocked: {name} ({questType}) - reward queued: {amount}x {GetDisplayName(reward.spawn_name)}");
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Error handling achievement unlock: {ex.Message}");
+                ModLog.Error($"[QuestMod] Error handling achievement unlock: {ex.Message}");
             }
         }
     }
@@ -125,7 +125,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Achievement unlock hook failed: {ex.Message}");
+                ModLog.Error($"[QuestMod] Achievement unlock hook failed: {ex.Message}");
             }
         }
     }

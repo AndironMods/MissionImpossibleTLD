@@ -121,10 +121,8 @@ namespace MissionImpossible
 
             if (!anyQuestEnabled)
             {
-                MelonLogger.Warning("[QuestModSettings] CONFIGURATION ERROR: All quest types are disabled!");
-                MelonLogger.Warning("[QuestModSettings] At least one quest type must be enabled (Daily, Weekly, or Monthly).");
-                MelonLogger.Warning("[QuestModSettings] Enabling Daily Quests as default...");
-                
+                ModLog.Warning("[QuestModSettings] All quest types were disabled - at least one is required, Daily quests are enabled again.");
+
                 // Auto-fix: enable Daily Quests
                 EnableDailyQuests = true;
             }
@@ -189,35 +187,28 @@ namespace MissionImpossible
         // ==================== SETTINGS CALLBACKS ====================
         protected override void OnConfirm()
         {
-            MelonLogger.Msg("[QuestModSettings] ========== SETTINGS CHANGE DETECTED ==========");
-            MelonLogger.Msg($"[QuestModSettings] Daily Quests: {DailyQuestCount} (Enabled: {EnableDailyQuests})");
-            MelonLogger.Msg($"[QuestModSettings] Weekly Quests: {WeeklyQuestCount} (Enabled: {EnableWeeklyQuests})");
-            MelonLogger.Msg($"[QuestModSettings] Monthly Quests: {MonthlyQuestCount} (Enabled: {EnableMonthlyQuests})");
-            MelonLogger.Msg($"[QuestModSettings] Difficulty: {GetDifficultyDescription()}");
-            
+            // The new value counts right away, not only with the next frame
+            QuestMod.LoggingEnabled = EnablePickupLogging;
+
+            ModLog.Info($"[QuestModSettings] Settings confirmed - Daily: {DailyQuestCount} ({(EnableDailyQuests ? "on" : "off")}), " +
+                        $"Weekly: {WeeklyQuestCount} ({(EnableWeeklyQuests ? "on" : "off")}), " +
+                        $"Monthly: {MonthlyQuestCount} ({(EnableMonthlyQuests ? "on" : "off")}), Difficulty: {GetDifficultyDescription()}");
+
             // Only regenerate if quest-related settings actually changed
             if (_questSettingsChanged && QuestMod.Instance != null)
             {
-                MelonLogger.Msg("[QuestModSettings] Quest settings changed - Regenerating quests...");
                 QuestMod.Instance.RegenerateQuestsForSettingsChange(showCreationLogs: true);
                 _questSettingsChanged = false;  // Reset flag
             }
-            else if (!_questSettingsChanged)
-            {
-                MelonLogger.Msg("[QuestModSettings] Only logging settings changed - No quest regeneration needed");
-            }
-            
+
             // base.OnConfirm() calls Save() - required or settings never reach disk
             base.OnConfirm();
-            
-            MelonLogger.Msg("[QuestModSettings] Settings confirmed and applied");
         }
 
         protected override void OnChange(FieldInfo field, object oldValue, object newValue)
         {
             if (field != null)
             {
-                MelonLogger.Msg($"[QuestModSettings] Setting changed: {field.Name} = {newValue}");
                 
                 // Track if any quest-related setting changed
                 string[] questSettingNames = new[]

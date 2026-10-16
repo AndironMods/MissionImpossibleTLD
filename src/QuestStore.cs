@@ -58,7 +58,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Error reading quest data of the save: {ex.Message}");
+                ModLog.Error($"[QuestMod] Error reading quest data of the save: {ex.Message}");
             }
 
             return new QuestState();
@@ -77,7 +77,7 @@ namespace MissionImpossible
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"[QuestMod] Error storing quest data in the save: {ex.Message}");
+                ModLog.Error($"[QuestMod] Error storing quest data in the save: {ex.Message}");
             }
         }
     }
