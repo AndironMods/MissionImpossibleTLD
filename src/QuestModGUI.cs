@@ -1,6 +1,7 @@
 using HarmonyLib;
 using MelonLoader;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using Il2Cpp;
@@ -170,6 +171,8 @@ namespace MissionImpossible
             _offsetsCompressed = false;
             _bigIconTransform = null;
             _bigIconSearchFailed = false;
+            _lastLoggedSelectedIndex = -1;
+            _rowMovedByGameLogged = false;
         }
 
         private static void Prefix_Panel_Log_Refresh(Panel_Log __instance)
@@ -279,8 +282,8 @@ namespace MissionImpossible
                 if (!IsOnCollectionsScreen(__instance))
                     return;
 
-                // Just ensure entries exist, don't position yet
                 EnsureQuestEntries(__instance);
+                ResizeAndRepositionAllEntries(__instance);
                 ApplyQuestDetailOverrideIfNeeded(__instance);
             }
             catch (Exception ex)
@@ -299,7 +302,10 @@ namespace MissionImpossible
                 if (!IsOnCollectionsScreen(__instance))
                     return;
 
+                // Last word of the frame: the game moves the list rows itself when you navigate with the arrow keys
+                ResizeAndRepositionAllEntries(__instance);
                 ApplyQuestDetailOverrideIfNeeded(__instance);
+                LogSelectionSnapshot(__instance);
             }
             catch (Exception ex)
             {
@@ -511,9 +517,21 @@ namespace MissionImpossible
                     }
 
                     float offset = FIXED_QUEST_SPACING * (questIndex + 1);
-                    item.transform.localPosition = new Vector3(anchorPos.x, anchorPos.y - offset, anchorPos.z);
+                    Vector3 target = new Vector3(anchorPos.x, anchorPos.y - offset, anchorPos.z);
 
-                    if (nativeScale.HasValue)
+                    Vector3 actual = item.transform.localPosition;
+                    if (actual != target)
+                    {
+                        if (ModLog.Enabled && !_rowMovedByGameLogged)
+                        {
+                            _rowMovedByGameLogged = true;
+                            ModLog.Info($"[QuestModGUI] The game moved the {type} quest row (y {actual.y:0.0} -> {target.y:0.0}), put back");
+                        }
+
+                        item.transform.localPosition = target;
+                    }
+
+                    if (nativeScale.HasValue && item.transform.localScale != nativeScale.Value)
                         item.transform.localScale = nativeScale.Value;
 
                     questIndex++;
@@ -523,6 +541,42 @@ namespace MissionImpossible
             {
                 ModLog.Error($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
             }
+        }
+
+        private static bool _rowMovedByGameLogged;
+        private static int _lastLoggedSelectedIndex = -1;
+
+        // Logging only: one line whenever the selected journal row changes, to see what the game moves when you navigate
+        private static void LogSelectionSnapshot(Panel_Log panelLog)
+        {
+            if (!ModLog.Enabled)
+                return;
+
+            int index = panelLog.m_CollectionListSelectedIndex;
+            if (index == _lastLoggedSelectedIndex)
+                return;
+
+            _lastLoggedSelectedIndex = index;
+            _rowMovedByGameLogged = false;
+
+            var sb = new StringBuilder();
+            sb.Append($"[QuestModGUI] Journal selection index {index}");
+
+            var scrollList = panelLog.m_CollectionsScrollList;
+            if (scrollList != null)
+                sb.Append($" | scrollList y={scrollList.transform.localPosition.y:0.0} selected={scrollList.m_SelectedIndex} target={scrollList.m_TargetIndex} tweening={scrollList.m_IsTweening}");
+
+            if (_cachedGrandparent != null)
+                sb.Append($" | grandparent y={_cachedGrandparent.localPosition.y:0.0}");
+
+            sb.Append(" | rows y:");
+            for (int i = 0; i < panelLog.m_CollectionList.Count; i++)
+            {
+                var row = panelLog.m_CollectionList[i];
+                sb.Append(row?.transform != null ? $" {row.transform.localPosition.y:0}" : " ?");
+            }
+
+            ModLog.Info(sb.ToString());
         }
 
         private static void OnQuestEntryClicked(GameObject clickedGo)
