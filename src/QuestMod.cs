@@ -96,7 +96,7 @@ namespace MissionImpossible
         private float _nextSaveLoadCheck;
         private float _saveLoadWaitSince = -1f;
         private bool _saveLoadWaitLogged;
-        public int QuestDataRevision => _store?.Revision ?? 0;
+        public int QuestDataRevision => (_store?.Revision ?? 0) + _nameRevision;
 
         // Mirrors the "Enable Logging" setting; ModLog reads it, so no code needs the settings object just to log
         public static bool LoggingEnabled { get; set; }
@@ -352,6 +352,7 @@ namespace MissionImpossible
 
             EnsureSaveLoaded();
             ProcessRewardQueue();
+            ResolvePendingNames();
 
             // End suppress window, then seed tracking baseline once inventory has settled
             if (_suppressLogging && (DateTime.Now - _lastCheckTime).TotalSeconds > 5)
@@ -959,6 +960,7 @@ namespace MissionImpossible
                                 GearItem rewardItem = GearItem.InstantiateGearItem(reward.Key);
                                 if (rewardItem != null)
                                 {
+                                    RememberName(reward.Key, rewardItem);
                                     inventory.AddGear(rewardItem);
                                     added++;
                                 }
@@ -1333,82 +1335,100 @@ namespace MissionImpossible
             return _questState.ActiveQuests.Where(q => q.Type == type).ToList();
         }
 
-        // Caches the resolved GearItemData (not a live GearItem/GameObject) per spawn_name, so
-        // the one-time instantiate+destroy cost is paid at most once per unique item per session.
-        private Dictionary<string, GearItemData> _spawnNameToGearItemData = new Dictionary<string, GearItemData>(System.StringComparer.OrdinalIgnoreCase);
+        // The game has no lookup from a spawn name (e.g. "GEAR_CookedBannock") to the item's data, so an item is
+        // briefly created to read its GearItemData. The data (not the live item) is cached per spawn name. This
+        // happens a few items per frame (ResolvePendingNames), never inside the journal or a log line, so opening
+        // the journal can't cause a hitch. Until a name is known, the JSON name is shown.
+        private readonly Dictionary<string, GearItemData> _spawnNameToGearItemData = new Dictionary<string, GearItemData>(System.StringComparer.OrdinalIgnoreCase);
+        private readonly Queue<string> _namesToResolve = new Queue<string>();
+        private readonly HashSet<string> _namesQueued = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        private const int NAMES_RESOLVED_PER_FRAME = 2;
 
-        // Resolves and caches the GearItemData for a spawn_name by briefly instantiating the
-        // prefab and reading its data reference back off, then destroying the instance. A null
-        // cache entry (failed resolution) is also stored, so a bad spawn_name only costs once.
-        private GearItemData GetGearItemDataFor(string spawnName)
-        {
-            if (_spawnNameToGearItemData.TryGetValue(spawnName, out GearItemData cached))
-                return cached;
-
-            GearItemData data = null;
-            try
-            {
-                GearItem probe = GearItem.InstantiateGearItem(spawnName);
-                if (probe != null)
-                {
-                    data = probe.GearItemData;
-                    UnityEngine.Object.Destroy(probe.gameObject);
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLog.Warning($"[QuestMod] Failed to resolve GearItemData for '{spawnName}': {ex.Message}");
-            }
-
-            _spawnNameToGearItemData[spawnName] = data;
-            return data;
-        }
-
-        private readonly HashSet<string> _nameLookupWarned = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        // Increases whenever a name becomes known, so the journal texts are rebuilt with it
+        private int _nameRevision;
 
         // Real, current-language display name for a spawn_name (e.g. "GEAR_CookedBannock" -> the game's own
-        // localized name for that item). Resolved with the game's own lookup (GearItem.GetGearDisplayName), which
-        // creates no object. Falls back to briefly instantiating the item, then to the JSON-key name, then to
-        // stripping "GEAR_" (e.g. an unrecognized spawn_name, or called before the asset system is ready).
+        // localized name). GearItemData.DisplayName re-resolves against the active language on every read.
+        // Falls back to the JSON-key name, then to stripping "GEAR_", while the name is not known yet.
         public string GetDisplayName(string spawnName)
         {
             if (string.IsNullOrEmpty(spawnName))
                 return spawnName;
 
-            try
+            if (_spawnNameToGearItemData.TryGetValue(spawnName, out GearItemData data))
             {
-                string fast = GearItem.GetGearDisplayName(spawnName);
-                if (!string.IsNullOrEmpty(fast) && !fast.Equals(spawnName, StringComparison.OrdinalIgnoreCase)
-                    && !fast.StartsWith("GAMEPLAY_", StringComparison.Ordinal) && !fast.StartsWith("GEAR_", StringComparison.Ordinal))
-                {
-                    return fast;
-                }
-            }
-            catch (Exception ex)
-            {
-                if (_nameLookupWarned.Add(spawnName))
-                    ModLog.Warning($"[QuestMod] GetGearDisplayName failed for '{spawnName}': {ex.Message}");
-            }
-
-            try
-            {
-                GearItemData data = GetGearItemDataFor(spawnName);
                 if (data != null)
                 {
-                    string localized = data.DisplayName;
-                    if (!string.IsNullOrEmpty(localized))
-                        return localized;
+                    try
+                    {
+                        string localized = data.DisplayName;
+                        if (!string.IsNullOrEmpty(localized))
+                            return localized;
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLog.Warning($"[QuestMod] Error reading localized DisplayName for '{spawnName}': {ex.Message}");
+                    }
                 }
             }
-            catch (Exception ex)
+            else if (_namesQueued.Add(spawnName))
             {
-                ModLog.Warning($"[QuestMod] Error reading localized DisplayName for '{spawnName}': {ex.Message}");
+                _namesToResolve.Enqueue(spawnName);
             }
 
             if (_spawnNameToDisplayName.TryGetValue(spawnName, out string jsonName))
                 return jsonName;
 
             return spawnName.StartsWith("GEAR_") ? spawnName.Substring(5) : spawnName;
+        }
+
+        // Reads the names of a few queued items per frame; only in a gameplay scene, where items can be created
+        private void ResolvePendingNames()
+        {
+            if (_namesToResolve.Count == 0 || !IsInGameplayScene)
+                return;
+
+            if (GameManager.GetInventoryComponent() == null)
+                return;
+
+            for (int i = 0; i < NAMES_RESOLVED_PER_FRAME && _namesToResolve.Count > 0; i++)
+            {
+                string spawnName = _namesToResolve.Dequeue();
+
+                GearItemData data = null;
+                try
+                {
+                    GearItem probe = GearItem.InstantiateGearItem(spawnName);
+                    if (probe != null)
+                    {
+                        data = probe.GearItemData;
+                        UnityEngine.Object.Destroy(probe.gameObject);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ModLog.Warning($"[QuestMod] Could not read the name of '{spawnName}': {ex.Message}");
+                }
+
+                // null: the item has no name to read, the JSON name stays
+                _spawnNameToGearItemData[spawnName] = data;
+                if (data != null)
+                    _nameRevision++;
+            }
+        }
+
+        // A reward item was just created anyway, so its name is free
+        private void RememberName(string spawnName, GearItem item)
+        {
+            if (item == null || _spawnNameToGearItemData.ContainsKey(spawnName))
+                return;
+
+            GearItemData data = item.GearItemData;
+            if (data == null)
+                return;
+
+            _spawnNameToGearItemData[spawnName] = data;
+            _nameRevision++;
         }
 
         // Get the ShowReward setting from mod settings. Used by QuestModGUI to determine if rewards should be visible or hidden as *****.
