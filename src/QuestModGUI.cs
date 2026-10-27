@@ -507,7 +507,17 @@ namespace MissionImpossible
                     scrollList.SetTargetIndex(0, false);
 
                 Vector3? nativeScale = panelLog.m_CollectionList[0]?.transform?.localScale;
+
+                // The quest rows continue the list below the game's own rows with the same row distance. Both depend
+                // on how many rows the game has (a new collection type adds one), so they are measured from the
+                // game's rows; the fixed values are only the fallback while the layout is not ready.
                 Vector3 anchorPos = new Vector3(0f, FIXED_QUEST_ANCHOR_Y, 0f);
+                float spacing = FIXED_QUEST_SPACING;
+                if (_cachedGrandparent != null && TryMeasureNativeRows(panelLog, _cachedGrandparent, out Vector3 lastNativePos, out float nativePitch))
+                {
+                    anchorPos = lastNativePos;
+                    spacing = nativePitch;
+                }
 
                 int questIndex = 0;
                 foreach (var type in QuestTypes)
@@ -518,7 +528,7 @@ namespace MissionImpossible
                         continue;
                     }
 
-                    float offset = FIXED_QUEST_SPACING * (questIndex + 1);
+                    float offset = spacing * (questIndex + 1);
                     Vector3 target = new Vector3(anchorPos.x, anchorPos.y - offset, anchorPos.z);
 
                     if (item.transform.localPosition != target)
@@ -534,6 +544,48 @@ namespace MissionImpossible
             {
                 ModLog.Error($"[QuestModGUI] Error in ResizeAndRepositionAllEntries: {ex.Message}");
             }
+        }
+
+        private static bool IsQuestEntry(CollectionListItem row)
+        {
+            foreach (var entry in _cachedEntries.Values)
+            {
+                if (entry == row)
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Position of the game's last own row and the distance between its last two rows, in the coordinates the
+        // quest rows live in. False while there are fewer than two rows or the layout is not set up yet.
+        private static bool TryMeasureNativeRows(Panel_Log panelLog, Transform space, out Vector3 lastPos, out float pitch)
+        {
+            lastPos = default;
+            pitch = 0f;
+
+            Transform previous = null;
+            Transform last = null;
+
+            var rows = panelLog.m_CollectionList;
+            for (int i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null || row.transform == null || IsQuestEntry(row))
+                    continue;
+
+                previous = last;
+                last = row.transform;
+            }
+
+            if (previous == null || last == null)
+                return false;
+
+            Vector3 previousPos = space.InverseTransformPoint(previous.position);
+            lastPos = space.InverseTransformPoint(last.position);
+            pitch = Mathf.Abs(previousPos.y - lastPos.y);
+
+            return pitch >= 1f;
         }
 
         private static void OnQuestEntryClicked(GameObject clickedGo)
