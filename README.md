@@ -96,7 +96,7 @@ Once installed, open **Options → Mod Settings → Mission Impossible** to:
 
 ## Requirements
 
-- **The Long Dark** v2.55 or higher
+- **The Long Dark** v2.58 or higher
 - **MelonLoader** v0.7.x
 - **ModSettings** v2.2.5
 - **ModData** v1.5.5
